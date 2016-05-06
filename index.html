@@ -8,6 +8,7 @@
 			#map {
 			  width: 100%;
 			  font-family: Arial, sans-serif;
+			  position: relative;
 			  /*height: 70vh;*/
 			  /*outline: 10px solid #F58229;*/
 			}
@@ -15,6 +16,7 @@
 			#stacked {
 				width: 100%;
 				height: 30vh;
+				position: relative;
 			}
 
 			/*  COLORED MAP  */
@@ -137,6 +139,7 @@
 				.domain([0, 200])
 				.range([1, 15]);
 
+			
 			/* STACKED AREA CHART VARIABLES */
 
 			// var formatPercent = d3.format("%");
@@ -151,12 +154,13 @@
 
 			var xAxis = d3.svg.axis()
 				.scale(x)
-				.orient("bottom");	
+				.orient("bottom")
+				.tickFormat(function(d) {return d});	
 
 			var yAxis = d3.svg.axis()
 				.scale(y)
 				.orient("left")
-				// .tickFormat(formatPercent);
+				.tickFormat(function(d) {return d + "%"});	
 
 			var area = d3.svg.area()
 				.x(function(d) { return x(d.year) })
@@ -179,18 +183,6 @@
 
 			var playing = false;
 
-			// function init() {
-			// 	setMap();
-			// 	animateMap();
-			// }
-
-			/* CANVAS & DATA */
-			queue()
-			.defer(d3.json, "../data/worldmap.json")
-			.defer(d3.csv, "../data/urbanization_rate.csv")
-			.defer(d3.csv, "../data/cities_population.csv")
-			.defer(d3.csv, "../data/continent_percent.csv")
-			.await(ready);
 
 			var mapsvg = d3.select("#map").append("svg")
 			    .attr("preserveAspectRatio", "xMidYMid")
@@ -208,6 +200,71 @@
 			    .append("g")
 			    .attr("transform", "translate(" + stackmargin.left + "," + stackmargin.top + ")");
 
+			/* SLIDER */
+
+			var brush = d3.svg.brush()
+				.x(x)
+				.extent([1950, 2030])
+				.on("brush", brushed)
+
+			/* DRAW SLIDER */
+				mapsvg.append("g")
+					.attr("class", "slider axis")
+					.attr("transform", "translate(" + 0 + "," + 450 + ")")
+					.call(d3.svg.axis()
+					.scale(x)
+					.orient("bottom") 
+					.tickFormat(function(d) {return d})
+					.tickSize(0)
+					.tickPadding(12));
+
+				var slider = mapsvg.append("g")
+					.attr("class", "slider")
+					.call(brush);
+
+				slider.selectAll(".extent,.resize")
+				    .remove();
+
+				slider.select(".background")
+				    .attr("height", height);
+
+				var handle = slider.append("circle")
+				    .attr("class", "handle")
+				    .attr("transform", "translate(0," + 450 + ")")
+				    .attr("r", 9);
+
+				function brushed() {
+				  var value = brush.extent()[0];
+
+				  if (d3.event.sourceEvent) { // not a programmatic event
+				    value = x.invert(d3.mouse(this)[0]);
+				    console.log(value);
+				    brush.extent([value, value]);
+				  }
+
+				  handle.attr("cx", x(value));
+				  currentYear = parseInt(value);
+				  console.log(currentYear);
+				  animateMap(currentYear);
+				  // d3.select("body").style("background-color", d3.hsl(value, .8, .8));
+				}
+
+
+
+			// function init() {
+			// 	setMap();
+			// 	animateMap();
+			// }
+
+			/* CANVAS & DATA */
+			queue()
+			.defer(d3.json, "../data/worldmap.json")
+			.defer(d3.csv, "../data/urbanization_rate.csv")
+			.defer(d3.csv, "../data/cities_population.csv")
+			.defer(d3.csv, "../data/continent_percent.csv")
+			.await(ready);
+
+
 			function ready(error, worldmap, rate, city, continent) {
 				if (error) throw error;
 
@@ -216,6 +273,24 @@
 				// console.log(city);
 				console.log(continent);
 
+				rateByIdNames = d3.keys(rate[0])
+					.filter(function(key) {
+						return key !== "country" & key !== "country_code";
+					})
+
+				console.log(rateByIdNames);
+				// rateById = rate.map(function(d, i) {
+				// 	var country = d.country_code;
+					
+				// 	{
+				// 		country: []
+				// 		values: continent.map(function(d) {
+				// 			return {
+				// 				year: d.year,
+				// 				y: d[name]
+				// 			}
+				// 		})
+
 				rate.forEach(function(d) {
 					// console.log(d.country_code);
 					rateById[d.country_code] = [d.y1950, d.y1955, d.y1960, d.y1965, d.y1970, d.y1975, d.y1980, d.y1985, d.y1990, d.y1995, d.y2000, d.y2005, d.y2010, d.y2015, d.y2020, d.y2025, d.y2030, d.y2014];
@@ -223,6 +298,7 @@
 
 				console.log(rateById);
 
+				
 				/* DRAW MAP */
 			
 				mapsvg.append("g")
@@ -421,7 +497,7 @@
 			 	var timer = setInterval(function() { 		
 
 			 		if (currentYear < 2030) {
-			 			currentYear += 5;
+			 			currentYear += 1;
 			 		} else {
 			 			currentYear = 2014;
 			 			clearInterval(timer);
@@ -467,7 +543,7 @@
 			 	var timer = setInterval(function() { 		
 
 			 		if (currentYear < 2030) {
-			 			currentYear += 5;
+			 			currentYear += 1;
 			 		} else {
 			 			currentYear = 2014;
 			 			clearInterval(timer);
@@ -512,7 +588,7 @@
 			 	var timer = setInterval(function() { 		
 
 			 		if (currentYear < 2030) {
-			 			currentYear += 5;
+			 			currentYear += 1;
 
 			 			
 
@@ -537,7 +613,7 @@
 					.duration(1000)
 					.attr("x", function() {
 						console.log("start");
-						return (stackW - stackmargin.left - 51 ) * (currentYear - 1950) / 80;
+						return (stackW - stackmargin.left - 51 ) * (currentYear - 1950) / 400;
 					} )
 
 			    d3.selectAll(".countries")
@@ -547,13 +623,11 @@
 				.style("fill", function (d) {
 					if (typeof rateById[d.id] !== "undefined") {
 		    		// console.log(rateById[d.id][22]);
-		    			if (currentYear === 2014) {
-		    				return mapcolor(rateById[d.id][17])
-		    			} else {
-		    				var currentAttribute = (currentYear - 1950) / 5;
+		    	
+		    			var currentAttribute = (currentYear - 1950);
 		    			// console.log(currentAttribute);
 			    		return mapcolor(rateById[d.id][currentAttribute]);
-		    			}
+		    	
 		    			
 			    	} else {
 			    		return "#eff3ff";
