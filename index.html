@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Urban Planet</title>
+		<style>
+			/* POSITION */
+			#map {
+			  width: 100%;
+			  font-family: Arial, sans-serif;
+			  /*height: 70vh;*/
+			  /*outline: 10px solid #F58229;*/
+			}
+
+			#stacked {
+				width: 100%;
+				height: 30vh;
+			}
+
+			/*  COLORED MAP  */
+
+			.countries {
+			  stroke: black;
+			  stroke-width: 0.5px;
+			}
+
+			.cities {
+				opacity: 0.7;
+				fill: #F58229;
+				/*fill: 	#A9A9A9;*/
+				/*fill: #a50f15;*/
+				/*stroke: #C0C0C0;*/
+			}
+
+			.button {
+				background-color: #6baed6;
+				border: 2px solid white;
+				padding: 5px 10px;
+				width: 90px;
+				text-align: center;
+				color: white;
+				font-weight: bold;
+				display: inline-block;
+				pointer-events: auto;
+			}
+
+			.button .inactive {
+				background-color: #6baed6;
+			}
+
+			.button:hover {
+				background-color: #3182bd;
+			}
+
+			.button .active {
+				background-color: #08519c;
+			}
+
+			.clock {
+				font-size: 150%;
+				font-weight: bold;
+				text-align: center;
+				position: absolute;
+				top: 20px;
+				left: 0;
+				z-index: 1;
+				width: 100%; 
+			}
+
+			.axis path,
+			.axis line {
+			  fill: none;
+			  stroke: #000;
+			  shape-rendering: crispEdges;
+			}
+
+
+
+		</style>
+	</head>
+
+	<body>
+		<button id="cities" class="button inactive">Cities</button>			
+		<button id="choropleth" class="button inactive">Choropleth</button>
+		<button id="both" class="button inactive">Both</button>
+		<div id="map">			
+			<div id="clock" class="clock">1950</div>
+			<!-- <div id="chart"></div> -->
+		</div>
+		<div id="stacked"></div>
+				
+		<!-- Load JQuery and d3.js -->
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+		<script src="//d3js.org/d3.v3.min.js"></script>
+		<script src="//d3js.org/queue.v1.min.js"></script>
+		<script src="//d3js.org/topojson.v1.min.js"></script>
+		<script>
+
+			/* CANVAS VARIABLES */
+			var mapW = 960;
+			var mapH = 500;
+			var responsiveW = $("#map").width();
+			//console.log("viewport width:" , vpW);
+			var responsiveH = $("#map").height();
+			//console.log("viewport height:" , vpH);
+			var margin = {top: responsiveH * 0.05, right: responsiveW * 0.05, bottom: responsiveH * 0.05, left: responsiveW * 0.05};
+			var width = responsiveW;
+			//console.log("width:" , width  - margin.right - margin.left);
+			var height = responsiveW * mapH / mapW ;
+			//console.log("height:" , height  - margin.top - margin.bottom);
+
+			var stackWidth = 960; 
+			var stackHeight = 320;
+			var stackresponsiveW = $("#stacked").width();
+			//console.log("viewport width:" , vpW);
+			var stackresponsiveH = $("#stacked").height();
+			var stackmargin = {top: 50, right: 50, bottom: 50, left: 50};
+			var stackW = stackresponsiveW;
+			var stackH = stackresponsiveH;
+
+			/* MAP & CITY VARIABLES */
+			var projection = d3.geo.mercator()
+			    .center([15, 10])
+			    .scale(150);
+			    //.rotate([-180,0]);
+
+			var path = d3.geo.path()
+			    .projection(projection);
+
+			var mapcolor = d3.scale.quantize()
+				.domain([0, 100])
+				// .range(["#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6"])
+				.range(["white"])
+
+			var citysize = d3.scale.linear()
+				.domain([0, 200])
+				.range([1, 15]);
+
+			/* STACKED AREA CHART VARIABLES */
+
+			// var formatPercent = d3.format("%");
+
+			var x = d3.scale.linear()
+				.domain([1950, 2030])
+				.range([0, (stackW - stackmargin.left - stackmargin.right )]);
+
+			var y = d3.scale.linear()
+				.domain([0, 100])
+				.range([(stackH - stackmargin.top - stackmargin.bottom), 0]);
+
+			var xAxis = d3.svg.axis()
+				.scale(x)
+				.orient("bottom");	
+
+			var yAxis = d3.svg.axis()
+				.scale(y)
+				.orient("left")
+				// .tickFormat(formatPercent);
+
+			var area = d3.svg.area()
+				.x(function(d) { return x(d.year) })
+				.y0(function(d) { return y(d.y0) })
+				.y1(function(d) { return y(d.y0 + d.y)} );
+
+			var stack = d3.layout.stack()
+				.values(function(d) {return d.values});
+
+			// var continents = ["africa","asia","europe","latin_america","north_america","oceania"];
+
+			var stackcolor = d3.scale.category10()
+				// .domain(continents);
+
+			var continentData, continentArea, continentNames, continent_group;
+
+			var rateById = {};
+
+			var currentYear = 1950;
+
+			var playing = false;
+
+			// function init() {
+			// 	setMap();
+			// 	animateMap();
+			// }
+
+			/* CANVAS & DATA */
+			queue()
+			.defer(d3.json, "../data/worldmap.json")
+			.defer(d3.csv, "../data/urbanization_rate.csv")
+			.defer(d3.csv, "../data/cities_population.csv")
+			.defer(d3.csv, "../data/continent_percent.csv")
+			.await(ready);
+
+			var mapsvg = d3.select("#map").append("svg")
+			    .attr("preserveAspectRatio", "xMidYMid")
+			    .attr("viewBox", "0 0 " + mapW + " " + mapH)
+			    .attr("width", width )
+			    .attr("height", height )
+			    .attr("id", "mapsvg");
+
+			var stacksvg = d3.select("#stacked").append("svg")
+			    // .attr("preserveAspectRatio", "xMidYMid")
+			    // .attr("viewBox", "0 0 " + stackW + " " + stackH)
+			    .attr("width", stackW)
+			    .attr("height", stackH)
+			    .attr("id", "stacksvg")
+			    .append("g")
+			    .attr("transform", "translate(" + stackmargin.left + "," + stackmargin.top + ")");
+
+			function ready(error, worldmap, rate, city, continent) {
+				if (error) throw error;
+
+				// console.log(worldmap);
+				// console.log(rate);
+				// console.log(city);
+				console.log(continent);
+
+				rate.forEach(function(d) {
+					// console.log(d.country_code);
+					rateById[d.country_code] = [d.y1950, d.y1955, d.y1960, d.y1965, d.y1970, d.y1975, d.y1980, d.y1985, d.y1990, d.y1995, d.y2000, d.y2005, d.y2010, d.y2015, d.y2020, d.y2025, d.y2030, d.y2014];
+				})
+
+				console.log(rateById);
+
+				/* DRAW MAP */
+			
+				mapsvg.append("g")
+				.attr("id", "g-map")
+			    .selectAll("path")
+			    .data(
+			        topojson.feature(worldmap, worldmap.objects.countries).features
+			        )
+			    .enter().append("path")
+			    .attr("d", path)
+			    .attr("class", "countries")
+			    .style("fill", function(d) {
+			    	if (typeof rateById[d.id] !== "undefined") {
+			    		// console.log(rateById[d.id][0]);
+			    		return mapcolor(rateById[d.id][0]);
+			    	} else {
+			    		return "#eff3ff";
+			    	}
+			    	
+			    });
+
+				/* DRAW CITIES */
+
+				mapsvg.append("g")
+				.attr("id", "g-city")
+			    .selectAll("circle")
+			    .data(city)
+			    .enter().append("circle")
+			    .attr("class", "cities")
+			   	.attr("r", function(d) {
+			   		return citysize( Math.sqrt(d.y1950) );
+			   	})
+			   	.attr("transform", function(d) {
+
+			   		return "translate(" + projection([d.longitude, d.latitude]) + ")";
+				});
+
+				/* DRAW STACKED AREA CHART */
+
+				// var continents = stack(stackcolor.domain().map(function(name) {
+				// 	return {
+				// 		name: name,
+				// 		values: data.map(function(d) {
+				// 			return {year: d.year, y: d[name] / 100};
+				// 		})
+				// 	}
+				// }));
+
+				// console.log(continents);
+
+				// var continent = stacksvg.selectAll(".continent")
+				// 	.data(continent)
+				// 	.enter().append("g")
+				// 	.attr("class", "continent");
+
+				// continent.append("path")
+				// .attr("class", "area")
+				// .attr("d", function(d) { return area(d.values) })
+				// .style("fill", function(d) { return stackcolor(d.name)});
+
+
+				
+				// var continent = stacksvg.append("path")
+				// 	.data(continent)
+				// 	.attr("class", "area")
+				// 	.attr("d", area);
+				continent.forEach(function(d) {
+					d.year = parseInt(d.year);
+					d.africa = parseFloat(d.africa);
+					d.asia = parseFloat(d.asia);
+					d.europe = parseFloat(d.europe);
+					d.latin_america = parseFloat(d.latin_america);
+					d.north_america = parseFloat(d.north_america);
+					d.oceania = parseFloat(d.oceania);
+				})
+
+				continentNames = d3.keys(continent[0])
+					.filter(function(key) {
+						return key !== "year";
+					})
+
+				console.log(continentNames);
+
+				stackcolor.domain(continentNames);
+
+				continentData = stack(continentNames.map(function(name) {
+					return {
+						name: name,
+						values: continent.map(function(d) {
+							return {
+								year: d.year,
+								y: d[name]
+							}
+						})
+					}
+				})); 
+
+
+
+				console.log(continentData);
+
+				continent_group = stacksvg.selectAll(".continent")
+					.data(continentData)
+					.enter().append("g")
+					.attr("class", "continent");
+
+					continentArea = continent_group.append("path")
+					.attr("class", "area")
+					.attr("d", function(d) { return area(d.values); })
+      				.style("fill", function(d) { return stackcolor(d.name); });
+
+      			// var continentText = continent.append("text")
+				     //  .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
+				     //  .attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.y0 + d.value.y / 2) + ")"; })
+				     //  .attr("x", -6)
+				     //  .attr("dy", ".35em")
+				     //  .text(function(d) { return d.name; });
+
+				stacksvg.append("g")
+			    .attr("class", "x axis")
+			    .attr("transform", "translate(0," + (stackH - stackmargin.bottom - stackmargin.top) + ")")
+			    .call(xAxis);
+
+				stacksvg.append("g")
+			    .attr("class", "y axis")
+			    .call(yAxis);
+
+			 //    continentData = stack(continentNames.map(function(name) {
+				// 	return {
+				// 		name: name,
+				// 		values: continent.map(function(d) {
+
+				// 			if (d.year <= 2010) {
+				// 				return {
+				// 					year: d.year,
+				// 					y: d[name]
+				// 				}
+				// 			} else {
+				// 				return {
+				// 					year: d.year,
+				// 					y: 0
+				// 				}
+				// 			}
+							
+				// 		})
+				// 	}
+				// })); 
+
+			 //    console.log(continentData);
+
+			 //    continentArea.transition()
+			 //    .duration(3000)
+			 //    .attr("d", function(d) { 
+			 //    	console.log("start")
+			 //    	return area(d.values); })
+
+
+			    var cover = stacksvg.append("rect")
+			    	.attr("class", "cover")
+			    	.attr("x", 1)
+                    .attr("y", -5)
+                    .attr("width", (stackW - stackmargin.left)  )
+                    .attr("height", (stackH - stackmargin.top - stackmargin.bottom + 5)  )
+                    .style("fill", "white");
+
+                // for (i = 1950, i < 1)
+
+               
+			};
+
+				
+					// .attr("width", function(){
+					// 	return (stackW * ( 1955- 1950) / 400)
+					// });
+
+			/* ANIMATE CHOROPLETH & CITY SIZE ACROSS TIME */
+
+			$("#cities").click(function() {
+			 	// $("#play").removeClass("inactive");
+			 	// $("#play").addClass("active");
+
+			 	mapcolor = d3.scale.quantize()
+				.domain([0, 100])
+				.range(["white"]);
+
+				d3.selectAll(".countries")
+				.style("stroke", "black")
+				.style("fill", "white");
+
+				d3.selectAll(".cities")
+			 	.style("stroke", "none")
+			 	.style("fill", "#F58229");	
+
+				
+
+			 	var timer = setInterval(function() { 		
+
+			 		if (currentYear < 2030) {
+			 			currentYear += 5;
+			 		} else {
+			 			currentYear = 2014;
+			 			clearInterval(timer);
+			 			// d3.select('#play').html("Play");
+			 		}
+
+			 		animateMap(currentYear);
+			 		d3.select('#clock').html(currentYear);
+			 		// d3.select('#play').html("Stop");			 		
+			 		
+
+			 	}, 1000)
+					
+			});
+
+			$("#choropleth").click(function() {
+				// currentYear = 1950;
+			 	// $("#choropleth").removeClass("inactive");
+			 	// $("#choropleth").addClass("active");
+
+			 	mapcolor = d3.scale.quantize()
+				.domain([0, 100])
+				.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
+
+
+			 	d3.selectAll(".countries")
+			 	.style("stroke", "none")
+			 	.style("fill", function (d) {
+						if (typeof rateById[d.id] !== "undefined") {
+			    		// console.log(rateById[d.id][0]);
+			    			// var currentAttribute = (currentYear - 1950) / 5;
+			    			// console.log(currentAttribute);
+				    		return mapcolor(rateById[d.id][0]);
+				    	} else {
+				    		return "#f7f7f7";
+				    	}
+					});
+
+				d3.selectAll(".cities")
+			 	.style("stroke", "transparent")
+			 	.style("fill", "transparent");					 	
+
+			 	var timer = setInterval(function() { 		
+
+			 		if (currentYear < 2030) {
+			 			currentYear += 5;
+			 		} else {
+			 			currentYear = 2014;
+			 			clearInterval(timer);
+			 			// d3.select('#play').html("Play");
+			 		}
+
+			 		animateMap(currentYear);
+			 		d3.select('#clock').html(currentYear);
+			 		// d3.select('#play').html("Stop");			 		
+			 		
+
+			 	}, 1000)
+					
+			});
+
+			$("#both").click(function() {
+				// currentYear = 1950;
+			 	// $("#choropleth").removeClass("inactive");
+			 	// $("#choropleth").addClass("active");
+
+			 	mapcolor = d3.scale.quantize()
+				.domain([0, 100])
+				.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
+
+				d3.selectAll(".cities")
+			 	.style("stroke", "none")
+			 	.style("fill", "#F58229");	
+
+			 	d3.selectAll(".countries")
+			 	.style("stroke", "none")
+			 	.style("fill", function (d) {
+						if (typeof rateById[d.id] !== "undefined") {
+			    		// console.log(rateById[d.id][0]);
+			    			// var currentAttribute = (currentYear - 1950) / 5;
+			    			// console.log(currentAttribute);
+				    		return mapcolor(rateById[d.id][0]);
+				    	} else {
+				    		return "#f0f0f0";
+				    	}
+					});			 	
+
+			 	var timer = setInterval(function() { 		
+
+			 		if (currentYear < 2030) {
+			 			currentYear += 5;
+
+			 			
+
+			 		} else {
+			 			currentYear = 2014;
+			 			clearInterval(timer);
+			 			// d3.select('#play').html("Play");
+			 		}
+
+			 		animateMap(currentYear);
+			 		d3.select('#clock').html(currentYear);
+			 		// d3.select('#play').html("Stop");			 		
+			 		
+
+			 	}, 1000)
+					
+			});
+
+			function animateMap(currentYear) {
+
+				d3.select("rect").transition()
+					.duration(1000)
+					.attr("x", function() {
+						console.log("start");
+						return (stackW - stackmargin.left - 51 ) * (currentYear - 1950) / 80;
+					} )
+
+			    d3.selectAll(".countries")
+				.transition()
+				.duration(500)
+				// .style("stroke-width", 5)
+				.style("fill", function (d) {
+					if (typeof rateById[d.id] !== "undefined") {
+		    		// console.log(rateById[d.id][22]);
+		    			if (currentYear === 2014) {
+		    				return mapcolor(rateById[d.id][17])
+		    			} else {
+		    				var currentAttribute = (currentYear - 1950) / 5;
+		    			// console.log(currentAttribute);
+			    		return mapcolor(rateById[d.id][currentAttribute]);
+		    			}
+		    			
+			    	} else {
+			    		return "#eff3ff";
+			    	}
+				});
+
+				d3.selectAll(".cities")
+				.transition()
+				.duration(500)
+				.attr("r", function(d) {
+					var currentAttribute = "y" + currentYear;
+					// console.log(d[currentAttribute]);
+					// return 4;
+					// console.log(currentAttribute);
+					return citysize( Math.sqrt(d[currentAttribute]) );
+					
+					// return citysize( Math.sqrt(d.y) )
+
+				 // cover.transition()
+					// .duration(500)
+					// .attr("x", function() {
+					// 	console.log("start");
+					// 	return stackW * (currentYear - 1950) / 400 ;
+					// } )
+
+				});
+
+
+				
+
+		    };
+
+
+		</script>
+	</body>
+
+</html>
