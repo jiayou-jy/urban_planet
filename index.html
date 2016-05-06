@@ -96,7 +96,8 @@
 		<script src="//d3js.org/topojson.v1.min.js"></script>
 		<script>
 
-			/* CANVAS VARIABLES */
+		(function($) {
+ 			/* CANVAS VARIABLES */
 			var mapW = 960;
 			var mapH = 500;
 			var responsiveW = $("#map").width();
@@ -584,6 +585,9 @@
 				
 
 		    };
+		})(jQuery);
+
+			
 
 
 		</script>
