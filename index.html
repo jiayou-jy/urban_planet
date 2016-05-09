@@ -6,16 +6,35 @@
 		<style>
 			/* POSITION */
 			
-			#buttonrow {
+			.buttonrow {
+				width: 100%;
+				position: relative;
+				margin: 0;
+				padding: 0;
+				padding-left: 70%;
+			}
+
+			.sliderrow {
 				width: 100%;
 				height: 5vh;
-				position: relative;
 			}
 
 			#slider {
-				width: 100%;
+				width: 90%;
 				height: 5vh;
 				position: relative;
+				display: inline-block;
+			}
+
+			#play {
+				vertical-align: 80%;
+				width: 8%;
+				height: 70%;
+				/*border-radius: 10px;*/
+				font-size: 120%;
+				padding: 5px;
+				background-color: #FCBC7E;
+				font-weight: bold;
 			}
 
 			#map {
@@ -28,22 +47,31 @@
 
 			#stack {
 				width: 100%;
-				height: 30vh;
+				height: 20vh;
 				position: relative;
+			}
+
+			text {
+				font-family: Arial, sans-serif;
+				font-size: 100%;
 			}
 
 			/* BUTTONROW */
 
 			.button {
-				background-color: #6baed6;
-				border: 2px solid white;
-				padding: 5px 10px;
-				width: 90px;
+				margin: 20px 0 0 0;
+				background-color: #FCBC7E;
+				border: 1px solid white;
+				/*padding: px 10px;*/
+				width: 8%;
 				text-align: center;
 				color: white;
-				font-weight: bold;
+				font-size: 90%;
+				/*font-weight: bold;*/
 				display: inline-block;
 				pointer-events: auto;
+				cursor: pointer;
+				vertical-align: 0%;
 			}
 
 			.button .inactive {
@@ -59,13 +87,20 @@
 			}
 
 			.clock {
-				font-size: 150%;
+				font-size: 200%;
 				font-weight: bold;
 				text-align: center;
 				display: inline-block;
 			}
 
 			/*  COLORED MAP  */
+
+			.clock {
+				position: absolute;
+				width: 100%;
+				text-align: center;
+				top: 10px;
+			}
 
 			.countries {
 			  stroke: none;
@@ -108,13 +143,13 @@
 
 			.sliderAxis .halo {
 			  stroke: gray;
-			  stroke-width: 3px;
+			  stroke-width: 1px;
 			  stroke-linecap: round;
 			}
 
 			.slider .handle path {
 			  stroke: gray;
-			  stroke-width: 2px;
+			  stroke-width: 1px;
 			  stroke-linecap: round;
 			  /*pointer-events: none;*/
 			}
@@ -141,14 +176,19 @@
 	</head>
 
 	<body>
-		<div id="buttonrow" class="buttonrow">
-			<div id="clock" class="clock">1950</div>
-			<button id="play" class="button inactive">Play</button>	
-			<button id="cities" class="button inactive">Cities</button>			
-			<button id="choropleth" class="button inactive">Choropleth</button>
+		
+		<div id="sliderrow" class="sliderrow">
+			<button id="play" class="playbutton button inactive">Play</button>	
+			<div id="slider"></div>
 		</div>
-		<div id="slider"></div>		
-		<div id="map"></div>
+		<div id="buttonrow" class="buttonrow">		
+			<button id="both" class="bothbutton button inactive">Overview</button>
+			<button id="cities" class="citiesbutton button inactive">Cities</button>			
+			<button id="choropleth" class="choroplethbutton button inactive">Countries</button>
+		</div>		
+		<div id="map">
+			<div id="clock" class="clock">1950</div>
+		</div>
 		<div id="stack"></div>
 				
 		<!-- Load JQuery and d3.js -->
@@ -234,7 +274,7 @@
 
 				stackYAxis = d3.svg.axis()
 					.scale(stackY)
-					.orient("left")
+					.orient("right")
 					.ticks(5)
 					.tickFormat(function(d) {return d + "%"; });	
 
@@ -260,7 +300,7 @@
  			function setSlider() {
  				sliderW = $("#slider").width();
  				sliderH = $("#slider").height();
- 				sliderMargin = {top: sliderH * 0.05, right: sliderW * 0.05, bottom: sliderH * 0.15, left: sliderW * 0.05};
+ 				sliderMargin = {top: sliderH * 0.05, right: sliderW * 0.05, bottom: sliderH * 0.15, left: sliderW * 0.02};
 
  				sliderX = d3.scale.linear()
 					.domain([1950, 2030])
@@ -396,12 +436,21 @@
 					.append("path")
 					.attr("class", "area")
 					.attr("d", function(d) { return stackArea(d.values); })
-      				.style("fill", function(d) { return stackColor(d.name); });
+      				.style("fill", function(d) { return stackColor(d.name); });		
 
-      			d3.selectAll(".continent")
+			    stackSvg.append("rect")
+			    	.attr("class", "cover")
+			    	.attr("x", -1)
+                    .attr("y", -5)
+                    .attr("width", (stackW - stackMargin.left - stackMargin.right)  )
+                    .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
+                    .style("fill", "white");
+
+                d3.selectAll(".continent")
       				.append("text")
-				    .datum(function(d) { return {name: d.name, value: d.values[2]}; })
-				    .attr("transform", function(d) { return "translate(" + stackX(d.value.year) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
+				    .datum(function(d) { return {name: d.name, value: d.values[0]}; })
+				    .attr("class", "continent_text")
+				    .attr("transform", function(d) { return "translate(" + (-50) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
 				    .attr("x", -6)
 				    .attr("dy", ".35em")
 				    .text(function(d) { return d.name; });
@@ -413,15 +462,8 @@
 
 				stackSvg.append("g")
 				    .attr("class", "y stackAxis")
+				    .attr("transform", "translate(" + (stackW - stackMargin.left - stackMargin.right) + ", 0)")
 				    .call(stackYAxis);
-
-			    stackSvg.append("rect")
-			    	.attr("class", "cover")
-			    	.attr("x", 0 )
-                    .attr("y", -5)
-                    .attr("width", (stackW - stackMargin.left)  )
-                    .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
-                    .style("fill", "white");
 			}
 
 			function drawSlider() {
@@ -455,8 +497,7 @@
 				    .remove();
 
 				d3.select(".slider").select(".background")
-				    .attr("height", sliderH)
-				    .attr("x", -500);
+				    .attr("height", sliderH);
 
 				d3.select(".slider")
 					.append("circle")
@@ -582,7 +623,8 @@
 
 			function animateStack(currentYear) {
 				d3.select(".cover").transition()
-					.duration(1000)
+					.duration(400)
+					.ease("sin")
 					.attr("x", function() {
 						return (stackW - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80;
 					});
