@@ -107,7 +107,7 @@
 		(function($) {
  			/* GLOBALS */
 
- 			var mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackRW, stackRH, stackMargin, stackWidth, stackHeight, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor,  continentArea, continentGroup, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
+ 			var mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackRW, stackRH, stackMargin, stackWidth, stackHeight, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
 
  			init();
  			// $(document).ready( init );
@@ -133,27 +133,27 @@
 				mapHeight = mapRW * mapH / mapW;
 
 				mapProjection = d3.geo.mercator()
-			    .center([15, 10])
-			    .scale(150);
+				    .center([15, 10])
+				    .scale(150);
 
 				mapPath = d3.geo.path()
-			    .projection(mapProjection);
+			    	.projection(mapProjection);
 
 				mapColor = d3.scale.quantize()
-				.domain([0, 100])
-				.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
-				// .range(["white"])
+					.domain([0, 100])
+					.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
+					// .range(["white"])
 
 				citySize = d3.scale.linear()
-				.domain([0, 200])
-				.range([1, 15]);
+					.domain([0, 200])
+					.range([1, 15]);
 
 				mapSvg = d3.select("#map").append("svg")
-			    .attr("preserveAspectRatio", "xMidYMid")
-			    .attr("viewBox", "0 0 " + mapW + " " + mapH)
-			    .attr("width", mapWidth )
-			    .attr("height", mapHeight )
-			    .attr("id", "mapsvg");
+				    .attr("preserveAspectRatio", "xMidYMid")
+				    .attr("viewBox", "0 0 " + mapW + " " + mapH)
+				    .attr("width", mapWidth )
+				    .attr("height", mapHeight )
+				    .attr("id", "mapsvg");
  			}
 
  			function setStack() {
@@ -161,33 +161,34 @@
  				stackH = $("#stack").height();
  				stackMargin = {top: stackH * 0.05, right: stackW * 0.05, bottom: stackH * 0.15, left: stackW * 0.05};
 
-
 				stackX = d3.scale.linear()
-				.domain([1950, 2030])
-				.range([0, (stackW - stackMargin.left - stackMargin.right )]);
+					.domain([1950, 2030])
+					.range([0, (stackW - stackMargin.left - stackMargin.right )])
+					.clamp(true);
 
 				stackY = d3.scale.linear()
-				.domain([0, 100])
-				.range([(stackH - stackMargin.top - stackMargin.bottom), 0]);
+					.domain([0, 100])
+					.range([(stackH - stackMargin.top - stackMargin.bottom), 0])
+					.clamp(true);
 
 				stackXAxis = d3.svg.axis()
-				.scale(stackX)
-				.orient("bottom")
-				.tickFormat(function(d) {return d; });	
+					.scale(stackX)
+					.orient("bottom")
+					.tickFormat(function(d) {return d; });	
 
 				stackYAxis = d3.svg.axis()
-				.scale(stackY)
-				.orient("left")
-				.ticks(5)
-				.tickFormat(function(d) {return d + "%"; });	
+					.scale(stackY)
+					.orient("left")
+					.ticks(5)
+					.tickFormat(function(d) {return d + "%"; });	
 
 				stackArea = d3.svg.area()
-				.x(function(d) { return stackX(d.year); })
-				.y0(function(d) { return stackY(d.y0); })
-				.y1(function(d) { return stackY(d.y0 + d.y); });
+					.x(function(d) { return stackX(d.year); })
+					.y0(function(d) { return stackY(d.y0); })
+					.y1(function(d) { return stackY(d.y0 + d.y); });
 
 				stackStack = d3.layout.stack()
-				.values(function(d) {return d.values; });
+					.values(function(d) {return d.values; });
 
 				stackColor = d3.scale.category10();
 
@@ -196,7 +197,7 @@
 				    .attr("height", stackH)
 				    .attr("id", "stacksvg")
 				    .append("g")
-				    .attr("transform", "translate(" + stackMargin.left + "," + stackMargin.top + ")");
+				    .attr("transform", "translate(" + stackMargin.left + "," + stackMargin.top + ")");	
  			}
 
 			function loadData() {
@@ -229,21 +230,21 @@
 				});
 				// console.log(rateByCountry);
 
-				continentData.forEach(function(d) {
-					d.year = parseInt(d.year);
-					d.africa = parseFloat(d.africa);
-					d.asia = parseFloat(d.asia);
-					d.europe = parseFloat(d.europe);
-					d.latin_america = parseFloat(d.latin_america);
-					d.north_america = parseFloat(d.north_america);
-					d.oceania = parseFloat(d.oceania);
-				})
+				// continentData.forEach(function(d) {
+				// 	d.year = parseInt(d.year);
+				// 	d.africa = parseFloat(d.africa);
+				// 	d.asia = parseFloat(d.asia);
+				// 	d.europe = parseFloat(d.europe);
+				// 	d.latin_america = parseFloat(d.latin_america);
+				// 	d.north_america = parseFloat(d.north_america);
+				// 	d.oceania = parseFloat(d.oceania);
+				// })
 
 				continentNames = d3.keys(continentData[0])
 					.filter(function(key) {
 						return key !== "year";
 					});
-				// console.log(continentNames);
+				console.log(continentNames);
 
 				stackColor.domain(continentNames);
 
@@ -258,12 +259,13 @@
 						})
 					}
 				}));
-				// console.log(stackData);
+				console.log(stackData);
 
 				$("#clock").html(currentYear);
 				drawWorld(worldmapData);
 				drawCity(cityData);
 				drawStack(stackData);
+				drawSlider();
 			}
 
 			function drawWorld(worldmapData) {
@@ -311,17 +313,23 @@
 					.attr("d", function(d) { return stackArea(d.values); })
       				.style("fill", function(d) { return stackColor(d.name); });
 
-      			// var continentText = continent.append("text")
-				     //  .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
-				     //  .attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.y0 + d.value.y / 2) + ")"; })
-				     //  .attr("x", -6)
-				     //  .attr("dy", ".35em")
-				     //  .text(function(d) { return d.name; });
+      			d3.selectAll(".continent")
+      				.append("text")
+				    .datum(function(d) { return {name: d.name, value: d.values[2]}; })
+				    .attr("transform", function(d) { return "translate(" + stackX(d.value.year) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
+				    .attr("x", -6)
+				    .attr("dy", ".35em")
+				    .text(function(d) { return d.name; });
 
 				stackSvg.append("g")
 				    .attr("class", "x stackAxis")
 				    .attr("transform", "translate(0," + (stackH - stackMargin.bottom - stackMargin.top) + ")")
-				    .call(stackXAxis);
+				    .call(stackXAxis)
+				    .select(".domain")
+					.select(function() {
+					    console.log(this);
+					    return this.parentNode.appendChild(this.cloneNode(true));
+					  });
 
 				stackSvg.append("g")
 				    .attr("class", "y stackAxis")
@@ -334,6 +342,53 @@
                     .attr("width", (stackW - stackMargin.left)  )
                     .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
                     .style("fill", "white");
+			}
+
+			function drawSlider() {
+	 			brush = d3.svg.brush()
+					.x(stackX)
+					.extent([1950, 2030])
+					.on("brush", brushed);
+
+				stackSvg.append("g")
+					.attr("class", "slider")
+					.call(brush);
+
+				d3.select(".slider").selectAll(".extent,.resize")
+				    .remove();
+
+				d3.select(".slider").select(".background")
+				    .attr("height", stackH);
+
+				d3.select(".slider")
+					.append("circle")
+				    .attr("class", "handle")
+				    .attr("transform", "translate(0," + (stackH - stackMargin.top - stackMargin.bottom) + ")")
+				    .attr("r", 10);
+
+				function brushed() {
+				  var value = brush.extent()[0];
+
+				  if (d3.event.sourceEvent) { // not a programmatic event
+				    value = stackX.invert(d3.mouse(this)[0]);
+				    console.log(value);
+				    brush.extent([value, value]);
+				  }
+
+				d3.select(".handle").attr("cx", stackX(value));
+				currentYear = parseInt(value);
+				console.log(currentYear);
+				animateWorld(currentYear);
+				animateCity(currentYear);
+				animateStack(currentYear);
+				$("#clock").html(currentYear);
+				  // animateMap(currentYear);
+				  // d3.select("body").style("background-color", d3.hsl(value, .8, .8));
+ 			}
+
+				
+
+				
 			}
 
 			function animateArt() {
@@ -357,15 +412,15 @@
 								d3.selectAll(".countries")
 								.style("stroke-width", 0);
 
-								animateWorld();
-								animateCity();
+								animateWorld(currentYear);
+								animateCity(currentYear);
 
 							} else if (buttonID === "choropleth") {
 								d3.selectAll(".cities")
 								.style("opacity", 0);
 								d3.selectAll(".countries")
 								.style("stroke-width", 0);
-								animateWorld();
+								animateWorld(currentYear);
 
 							} else {
 								d3.selectAll(".cities")
@@ -374,10 +429,10 @@
 								.style("stroke", "black")
 								.style("stroke-width", 1)
 								.style("fill", "white");
-								animateCity();
+								animateCity(currentYear);
 							};
 
-							animateStack();
+							animateStack(currentYear);
 							$("#clock").html(currentYear);
 						}, 100);
 
@@ -393,7 +448,7 @@
 			}
 
 
-			function animateWorld() {
+			function animateWorld(currentYear) {
 				d3.selectAll(".countries").transition()
 					.duration(100)
 					.style("fill", function (d) {
@@ -407,7 +462,7 @@
 					});
 			}
 
-			function animateCity() {
+			function animateCity(currentYear) {
 				d3.selectAll(".cities")
 					.style("opacity", 0.7)
 					.transition()
@@ -418,7 +473,7 @@
 					});
 			}
 
-			function animateStack() {
+			function animateStack(currentYear) {
 				d3.select("rect").transition()
 					.duration(100)
 					.attr("x", function() {
