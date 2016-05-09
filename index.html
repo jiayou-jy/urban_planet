@@ -108,15 +108,27 @@
 
 			.sliderAxis .halo {
 			  stroke: gray;
-			  stroke-width: 4px;
+			  stroke-width: 3px;
 			  stroke-linecap: round;
 			}
 
 			.slider .handle path {
 			  stroke: gray;
-			  stroke-width: 3px;
+			  stroke-width: 2px;
 			  stroke-linecap: round;
-			  pointer-events: none;
+			  /*pointer-events: none;*/
+			}
+
+			.slider {
+				cursor: crosshair;
+			}
+
+			.handle {
+				fill: #FCBC7E;
+			}
+
+			.sliderAxis text {
+				pointer-events: none;
 			}
 
 			/*.slider .handle text {
@@ -159,10 +171,10 @@
  				animateArt();
  			}
 
- 			function setArt() {
- 				setSlider();
+ 			function setArt() {			
  				setMap();
  				setStack();
+ 				setSlider();
  				loadData();
  			}
 
@@ -365,13 +377,6 @@
 			    .data(cityData)
 			    .enter().append("circle")
 			    .attr("class", "cities")
-			    // .style("opacity", function(d) {
-			    // 	if (d.year === 1950) {
-			    // 		return 0.7;
-			    // 	} else {
-			    // 		return 0;
-			    // 	}
-			    // })
 			   	.attr("r", function(d) {
 			   		if (d.year === 1950) {
 			    		return citySize( Math.sqrt(d.population) );
@@ -382,22 +387,6 @@
 		   			return "translate(" + mapProjection([d.longitude, d.latitude]) + ")";
 				});
 			}
-
-			// function drawCity(cityData) {
-			// 	mapSvg.append("g")
-			// 	.attr("id", "g-city")
-			//     .selectAll("circle")
-			//     .data(cityData)
-			//     .enter().append("circle")
-			//     .attr("class", "cities")
-			//    	.attr("r", function(d) {
-			//    		// console.log(d[yearNames[0]]);
-			//    		return citySize( Math.sqrt(d[yearNames[0]]) );
-			//    	})
-			//    	.attr("transform", function(d) {
-			//    		return "translate(" + mapProjection([d.longitude, d.latitude]) + ")";
-			// 	});
-			// }
 
 			function drawStack(stackData) {
 				stackSvg.selectAll(".continent")
@@ -428,7 +417,7 @@
 
 			    stackSvg.append("rect")
 			    	.attr("class", "cover")
-			    	.attr("x", (stackW - stackMargin.left - stackMargin.right) )
+			    	.attr("x", 0 )
                     .attr("y", -5)
                     .attr("width", (stackW - stackMargin.left)  )
                     .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
@@ -439,7 +428,6 @@
 	 			brush = d3.svg.brush()
 					.x(sliderX)
 					.extent([1950, 2030])
-					// .on("brush", brushed)
 					.on("brushend", brushended);
 
 				sliderSvg.append("g")
@@ -454,7 +442,6 @@
 					.tickFormat(function(d) {return d; }) )
 					.select(".domain")
 					.select(function() {
-					    // console.log(this);
 					    return this.parentNode.appendChild(this.cloneNode(true));
 					})
 					.attr("class", "halo");
@@ -464,38 +451,40 @@
 					.call(brush);
 					
 
-				d3.select(".slider").selectAll(".extent,.resize")
+				d3.select(".slider").selectAll(".extent, .resize")
 				    .remove();
 
 				d3.select(".slider").select(".background")
-				    .attr("height", sliderH);
+				    .attr("height", sliderH)
+				    .attr("x", -500);
 
 				d3.select(".slider")
-					.append("g")
-					.attr("class", "handle")
-					.append("path")
+					.append("circle")
+					.attr("class", "handle")	
 					.attr("transform", "translate(0," + (sliderH - sliderMargin.top - sliderMargin.bottom)/ 2 + ")")
-					.attr("d", "M 0 -20 V 20")
+					.attr("r", 10)
 					.call(brush.event);
 
-	 				function brushended() {
-					    var value0 = brush.extent()[0];
-					  	console.log(value0);
+ 				function brushended() {
+				    var value0 = brush.extent()[0];
+				  	// console.log(value0);
 
-					  	if (!d3.event.sourceEvent) return;{ // not a programmatic event
-					    var value1 = sliderX.invert(d3.mouse(this)[0]);
+				  	if (!d3.event.sourceEvent) return; 
+					  	{ // not a programmatic event
+						    var value1 = sliderX.invert(d3.mouse(this)[0]);
 
-					    if (value1 > value0) {
-					    	value1 = Math.ceil( value1 / 5) * 5;
-					    } else {
-					    	value1 = Math.floor( value1 / 5) * 5;
-					    }
-					    console.log(value1);
+						    if (value1 > value0) {
+						    	value1 = Math.ceil( value1 / 5) * 5;
+						    } else {
+						    	value1 = Math.floor( value1 / 5) * 5;
+						    }
+						    // console.log(value1);
+						    brush.extent([value1, value1]);
+						}
 
-					    brush.extent([value1, value1]);
-					  }
-
-					  d3.select(".handle").transition(100).attr("transform", "translate(" + sliderX(value1) + ",0)");
+					d3.select(".handle")
+					  	.transition(100)
+					  	.attr("cx", sliderX(value1));
 						// d3.select(".handle").attr("cx", stackX(value));
 						currentYear = value1;
 						// console.log(currentYear);
@@ -504,8 +493,6 @@
 						animateStack(currentYear);
 						$("#clock").html(currentYear);
 	 			}
-				
- 			console.log( Math.round( 1968.3 / 5 ) * 5);
 				
 			}
 
@@ -552,6 +539,7 @@
 
 							animateStack(currentYear);
 							$("#clock").html(currentYear);
+							animateSlider(currentYear);
 						}, 1000);
 
 						$(this).html("Stop");
@@ -561,7 +549,7 @@
 						$(this).html(buttonID);
 						playing = false;
 					}
-				})
+				});
 
 			}
 
@@ -585,13 +573,6 @@
 			    .style("opacity", 0.7)
 			    .transition()
 				.duration(1000)
-			   	// .style("opacity", function(d) {
-			    // 	if (d.year === currentYear) {
-			    // 		return 0.7;
-			    // 	} else {
-			    // 		return 0;
-			    // 	}
-			    // })
 			    .attr("r", function(d) {
 			   		if (d.year === currentYear) {
 			    		return citySize( Math.sqrt(d.population) );
@@ -599,30 +580,21 @@
 			   	});
 			}
 
-			// function animateCity(currentYear) {
-			// 	d3.selectAll(".cities")
-			// 		.style("opacity", 0.7)
-			// 		.transition()
-			// 		.duration(100)
-			// 		.attr("r", function(d) {
-			// 			var currentAttribute = "y" + currentYear;
-			// 			return citySize( Math.sqrt(d[currentAttribute]) );
-			// 		});
-			// }
-
 			function animateStack(currentYear) {
-				d3.select("rect").transition()
+				d3.select(".cover").transition()
 					.duration(1000)
 					.attr("x", function() {
-						// console.log("start");
 						return (stackW - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80;
 					});
 			}
 			
+			function animateSlider(currentYear) {
+				d3.select(".handle")
+					  	.transition(100)
+					  	.attr("cx", sliderX(currentYear));
+			}
+
 		})(jQuery);
-
-			
-
 
 		</script>
 	</body>
