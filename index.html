@@ -12,6 +12,12 @@
 				position: relative;
 			}
 
+			#slider {
+				width: 100%;
+				height: 5vh;
+				position: relative;
+			}
+
 			#map {
 			  width: 100%;
 			  font-family: Arial, sans-serif;
@@ -81,8 +87,44 @@
 			.stackAxis line {
 			  fill: none;
 			  stroke: #000;
-			  shape-rendering: crispEdges;
+			  stroke-linecap: round;
 			}
+
+			/* SLIDER */
+			.sliderAxis path,
+			.sliderAxis line {
+			  fill: none;
+			  stroke: gray;
+			  stroke-width: 3px;
+			  stroke-linecap: round;
+			}
+
+			.sliderAxis {
+			  fill: gray;
+			  -webkit-user-select: none;
+			  -moz-user-select: none;
+			  user-select: none;
+			}
+
+			.sliderAxis .halo {
+			  stroke: gray;
+			  stroke-width: 4px;
+			  stroke-linecap: round;
+			}
+
+			.slider .handle path {
+			  stroke: gray;
+			  stroke-width: 3px;
+			  stroke-linecap: round;
+			  pointer-events: none;
+			}
+
+			/*.slider .handle text {
+			  fill: white;
+			  text-align: center;
+			  font-size: 18px;
+			}*/
+
 		</style>
 	</head>
 
@@ -92,13 +134,14 @@
 			<button id="play" class="button inactive">Play</button>	
 			<button id="cities" class="button inactive">Cities</button>			
 			<button id="choropleth" class="button inactive">Choropleth</button>
-		</div>		
+		</div>
+		<div id="slider"></div>		
 		<div id="map"></div>
 		<div id="stack"></div>
 				
 		<!-- Load JQuery and d3.js -->
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-		<script src="//d3js.org/d3.v3.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 		<script src="//d3js.org/queue.v1.min.js"></script>
 		<script src="//d3js.org/topojson.v1.min.js"></script>
 		<script>
@@ -106,7 +149,7 @@
 		(function($) {
  			/* GLOBALS */
 
- 			var mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackRW, stackRH, stackMargin, stackWidth, stackHeight, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
+ 			var sliderW, sliderH, sliderMargin, mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackMargin, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
 
  			init();
  			// $(document).ready( init );
@@ -117,6 +160,7 @@
  			}
 
  			function setArt() {
+ 				setSlider();
  				setMap();
  				setStack();
  				loadData();
@@ -199,6 +243,24 @@
 				    .attr("id", "stacksvg")
 				    .append("g")
 				    .attr("transform", "translate(" + stackMargin.left + "," + stackMargin.top + ")");	
+ 			}
+
+ 			function setSlider() {
+ 				sliderW = $("#slider").width();
+ 				sliderH = $("#slider").height();
+ 				sliderMargin = {top: sliderH * 0.05, right: sliderW * 0.05, bottom: sliderH * 0.15, left: sliderW * 0.05};
+
+ 				sliderX = d3.scale.linear()
+					.domain([1950, 2030])
+					.range([0, (sliderW - sliderMargin.left - sliderMargin.right )])
+					.clamp(true);
+
+				sliderSvg = d3.select("#slider").append("svg")
+				    .attr("width", sliderW)
+				    .attr("height", sliderH)
+				    .attr("id", "slidersvg")
+				    .append("g")
+				    .attr("transform", "translate(" + sliderMargin.left + "," + sliderMargin.top + ")");	
  			}
 
 			function loadData() {
@@ -358,12 +420,7 @@
 				stackSvg.append("g")
 				    .attr("class", "x stackAxis")
 				    .attr("transform", "translate(0," + (stackH - stackMargin.bottom - stackMargin.top) + ")")
-				    .call(stackXAxis)
-				    .select(".domain")
-					.select(function() {
-					    // console.log(this);
-					    return this.parentNode.appendChild(this.cloneNode(true));
-					  });
+				    .call(stackXAxis);
 
 				stackSvg.append("g")
 				    .attr("class", "y stackAxis")
@@ -380,48 +437,75 @@
 
 			function drawSlider() {
 	 			brush = d3.svg.brush()
-					.x(stackX)
+					.x(sliderX)
 					.extent([1950, 2030])
-					.on("brush", brushed);
+					// .on("brush", brushed)
+					.on("brushend", brushended);
 
-				stackSvg.append("g")
+				sliderSvg.append("g")
+					.attr("class", "x sliderAxis")
+					.attr("transform", "translate(0," + (sliderH - sliderMargin.top - sliderMargin.bottom) / 2 + ")")
+					.call( d3.svg.axis()
+					.ticks(16)
+					.scale(sliderX)
+					.orient("bottom")
+					.tickSize(10)
+					.tickPadding(5)
+					.tickFormat(function(d) {return d; }) )
+					.select(".domain")
+					.select(function() {
+					    // console.log(this);
+					    return this.parentNode.appendChild(this.cloneNode(true));
+					})
+					.attr("class", "halo");
+
+				sliderSvg.append("g")
 					.attr("class", "slider")
 					.call(brush);
+					
 
 				d3.select(".slider").selectAll(".extent,.resize")
 				    .remove();
 
 				d3.select(".slider").select(".background")
-				    .attr("height", 50);
+				    .attr("height", sliderH);
 
 				d3.select(".slider")
-					.append("circle")
-				    .attr("class", "handle")
-				    .attr("transform", "translate(0," + (stackH - stackMargin.top - stackMargin.bottom) + ")")
-				    .attr("r", 10);
+					.append("g")
+					.attr("class", "handle")
+					.append("path")
+					.attr("transform", "translate(0," + (sliderH - sliderMargin.top - sliderMargin.bottom)/ 2 + ")")
+					.attr("d", "M 0 -20 V 20")
+					.call(brush.event);
 
-				function brushed() {
-				  var value = brush.extent()[0];
+	 				function brushended() {
+					    var value0 = brush.extent()[0];
+					  	console.log(value0);
 
-				  if (d3.event.sourceEvent) { // not a programmatic event
-				    value = stackX.invert(d3.mouse(this)[0]);
-				    // console.log(value);
-				    brush.extent([value, value]);
-				  }
+					  	if (!d3.event.sourceEvent) return;{ // not a programmatic event
+					    var value1 = sliderX.invert(d3.mouse(this)[0]);
 
-				d3.select(".handle").attr("cx", stackX(value));
-				currentYear = parseInt(value);
-				// console.log(currentYear);
-				animateWorld(currentYear);
-				animateCity(currentYear);
-				animateStack(currentYear);
-				$("#clock").html(currentYear);
-				  // animateMap(currentYear);
-				  // d3.select("body").style("background-color", d3.hsl(value, .8, .8));
- 			}
+					    if (value1 > value0) {
+					    	value1 = Math.ceil( value1 / 5) * 5;
+					    } else {
+					    	value1 = Math.floor( value1 / 5) * 5;
+					    }
+					    console.log(value1);
 
+					    brush.extent([value1, value1]);
+					  }
+
+					  d3.select(".handle").transition(100).attr("transform", "translate(" + sliderX(value1) + ",0)");
+						// d3.select(".handle").attr("cx", stackX(value));
+						currentYear = value1;
+						// console.log(currentYear);
+						animateWorld(currentYear);
+						animateCity(currentYear);
+						animateStack(currentYear);
+						$("#clock").html(currentYear);
+	 			}
 				
-
+ 			console.log( Math.round( 1968.3 / 5 ) * 5);
 				
 			}
 
