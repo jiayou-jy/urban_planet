@@ -93,7 +93,8 @@
 			<button id="cities" class="button inactive">Cities</button>			
 			<button id="choropleth" class="button inactive">Choropleth</button>
 		</div>		
-		<div id="map"></div>
+		<div id="map">						
+		</div>
 		<div id="stack"></div>
 				
 		<!-- Load JQuery and d3.js -->
@@ -144,8 +145,12 @@
 					// .range(["white"])
 
 				citySize = d3.scale.linear()
-					.domain([20, 200])
-					.range([1, 20]);
+					.domain([0, 7])
+					.range([1, 15]);
+
+				// citySize = d3.scale.linear()
+				// 	.domain([0, 200])
+				// 	.range([1, 15]);
 
 				mapSvg = d3.select("#map").append("svg")
 				    .attr("preserveAspectRatio", "xMidYMid")
@@ -206,7 +211,7 @@
 					.defer(d3.json, "../data/worldmap.json")
 					.defer(d3.csv, "../data/urbanization_rate.csv")
 					// .defer(d3.csv, "../data/cities_population.csv")
-					.defer(d3.csv, "../data/largest_200_cities.csv")
+					.defer(d3.csv, "../data/largest_30_cities.csv")
 					.defer(d3.csv, "../data/continent_percent.csv")
 					.await(processData);
 			}

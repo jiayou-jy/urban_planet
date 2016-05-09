@@ -93,7 +93,8 @@
 			<button id="cities" class="button inactive">Cities</button>			
 			<button id="choropleth" class="button inactive">Choropleth</button>
 		</div>		
-		<div id="map"></div>
+		<div id="map">						
+		</div>
 		<div id="stack"></div>
 				
 		<!-- Load JQuery and d3.js -->
@@ -144,8 +145,8 @@
 					// .range(["white"])
 
 				citySize = d3.scale.linear()
-					.domain([20, 200])
-					.range([1, 20]);
+					.domain([0, 200])
+					.range([1, 15]);
 
 				mapSvg = d3.select("#map").append("svg")
 				    .attr("preserveAspectRatio", "xMidYMid")
@@ -173,7 +174,6 @@
 				stackXAxis = d3.svg.axis()
 					.scale(stackX)
 					.orient("bottom")
-					.ticks(16)
 					.tickFormat(function(d) {return d; });	
 
 				stackYAxis = d3.svg.axis()
@@ -205,8 +205,7 @@
 				queue()
 					.defer(d3.json, "../data/worldmap.json")
 					.defer(d3.csv, "../data/urbanization_rate.csv")
-					// .defer(d3.csv, "../data/cities_population.csv")
-					.defer(d3.csv, "../data/largest_200_cities.csv")
+					.defer(d3.csv, "../data/cities_population.csv")
 					.defer(d3.csv, "../data/continent_percent.csv")
 					.await(processData);
 			}
@@ -232,13 +231,6 @@
 				});
 				// console.log(rateByCountry);
 
-				cityData.forEach(function(d) {
-					d.year = parseInt(d.year);
-					d.latitude = parseFloat(d.latitude);
-					d.longitude = parseFloat(d.longitude);
-					d.population = parseFloat(d.population);
-				})
-
 				continentData.forEach(function(d) {
 					d.year = parseInt(d.year);
 					d["Africa"] = parseFloat(d["Africa"]);
@@ -253,7 +245,7 @@
 					.filter(function(key) {
 						return key !== "year";
 					});
-				// console.log(continentNames);
+				console.log(continentNames);
 
 				stackColor.domain(continentNames);
 
@@ -268,7 +260,7 @@
 						})
 					}
 				}));
-				// console.log(stackData);
+				console.log(stackData);
 
 				$("#clock").html(currentYear);
 				drawWorld(worldmapData);
@@ -303,39 +295,14 @@
 			    .data(cityData)
 			    .enter().append("circle")
 			    .attr("class", "cities")
-			    // .style("opacity", function(d) {
-			    // 	if (d.year === 1950) {
-			    // 		return 0.7;
-			    // 	} else {
-			    // 		return 0;
-			    // 	}
-			    // })
 			   	.attr("r", function(d) {
-			   		if (d.year === 1950) {
-			    		return citySize( Math.sqrt(d.population) );
-			    	}
+			   		// console.log(d[yearNames[0]]);
+			   		return citySize( Math.sqrt(d[yearNames[0]]) );
 			   	})
 			   	.attr("transform", function(d) {
-		   			// console.log([d.longitude, d.latitude]);
-		   			return "translate(" + mapProjection([d.longitude, d.latitude]) + ")";
+			   		return "translate(" + mapProjection([d.longitude, d.latitude]) + ")";
 				});
 			}
-
-			// function drawCity(cityData) {
-			// 	mapSvg.append("g")
-			// 	.attr("id", "g-city")
-			//     .selectAll("circle")
-			//     .data(cityData)
-			//     .enter().append("circle")
-			//     .attr("class", "cities")
-			//    	.attr("r", function(d) {
-			//    		// console.log(d[yearNames[0]]);
-			//    		return citySize( Math.sqrt(d[yearNames[0]]) );
-			//    	})
-			//    	.attr("transform", function(d) {
-			//    		return "translate(" + mapProjection([d.longitude, d.latitude]) + ")";
-			// 	});
-			// }
 
 			function drawStack(stackData) {
 				stackSvg.selectAll(".continent")
@@ -361,7 +328,7 @@
 				    .call(stackXAxis)
 				    .select(".domain")
 					.select(function() {
-					    // console.log(this);
+					    console.log(this);
 					    return this.parentNode.appendChild(this.cloneNode(true));
 					  });
 
@@ -434,7 +401,7 @@
 						timer = setInterval(function() {
 							if (currentYear < 2030) {
 								// console.log(currentYear);
-								currentYear += 5;
+								currentYear += 1;
 
 							} else {
 								currentYear = 1950;
@@ -468,7 +435,7 @@
 
 							animateStack(currentYear);
 							$("#clock").html(currentYear);
-						}, 1000);
+						}, 100);
 
 						$(this).html("Stop");
 						playing = true;
@@ -484,7 +451,7 @@
 
 			function animateWorld(currentYear) {
 				d3.selectAll(".countries").transition()
-					.duration(1000)
+					.duration(100)
 					.style("fill", function (d) {
 						if (typeof rateByCountry[d.id] !== "undefined") {  	
 			    			var currentAttribute = (currentYear - 1950);
@@ -498,37 +465,18 @@
 
 			function animateCity(currentYear) {
 				d3.selectAll(".cities")
-			    .style("opacity", 0.7)
-			    .transition()
-				.duration(1000)
-			   	// .style("opacity", function(d) {
-			    // 	if (d.year === currentYear) {
-			    // 		return 0.7;
-			    // 	} else {
-			    // 		return 0;
-			    // 	}
-			    // })
-			    .attr("r", function(d) {
-			   		if (d.year === currentYear) {
-			    		return citySize( Math.sqrt(d.population) );
-			    	}
-			   	});
+					.style("opacity", 0.7)
+					.transition()
+					.duration(100)
+					.attr("r", function(d) {
+						var currentAttribute = "y" + currentYear;
+						return citySize( Math.sqrt(d[currentAttribute]) );
+					});
 			}
-
-			// function animateCity(currentYear) {
-			// 	d3.selectAll(".cities")
-			// 		.style("opacity", 0.7)
-			// 		.transition()
-			// 		.duration(100)
-			// 		.attr("r", function(d) {
-			// 			var currentAttribute = "y" + currentYear;
-			// 			return citySize( Math.sqrt(d[currentAttribute]) );
-			// 		});
-			// }
 
 			function animateStack(currentYear) {
 				d3.select("rect").transition()
-					.duration(1000)
+					.duration(100)
 					.attr("x", function() {
 						// console.log("start");
 						return (stackW - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80;
