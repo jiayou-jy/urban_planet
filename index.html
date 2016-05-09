@@ -230,15 +230,15 @@
 				});
 				// console.log(rateByCountry);
 
-				// continentData.forEach(function(d) {
-				// 	d.year = parseInt(d.year);
-				// 	d.africa = parseFloat(d.africa);
-				// 	d.asia = parseFloat(d.asia);
-				// 	d.europe = parseFloat(d.europe);
-				// 	d.latin_america = parseFloat(d.latin_america);
-				// 	d.north_america = parseFloat(d.north_america);
-				// 	d.oceania = parseFloat(d.oceania);
-				// })
+				continentData.forEach(function(d) {
+					d.year = parseInt(d.year);
+					d["Africa"] = parseFloat(d["Africa"]);
+					d["Asia"] = parseFloat(d["Asia"]);
+					d["Europe"] = parseFloat(d["Europe"]);
+					d["Latin America"] = parseFloat(d["Latin America"]);
+					d["North America"] = parseFloat(d["North America"]);
+					d["Oceania"] = parseFloat(d["Oceania"]);
+				})
 
 				continentNames = d3.keys(continentData[0])
 					.filter(function(key) {
@@ -358,7 +358,7 @@
 				    .remove();
 
 				d3.select(".slider").select(".background")
-				    .attr("height", stackH);
+				    .attr("height", 50);
 
 				d3.select(".slider")
 					.append("circle")
@@ -371,13 +371,13 @@
 
 				  if (d3.event.sourceEvent) { // not a programmatic event
 				    value = stackX.invert(d3.mouse(this)[0]);
-				    console.log(value);
+				    // console.log(value);
 				    brush.extent([value, value]);
 				  }
 
 				d3.select(".handle").attr("cx", stackX(value));
 				currentYear = parseInt(value);
-				console.log(currentYear);
+				// console.log(currentYear);
 				animateWorld(currentYear);
 				animateCity(currentYear);
 				animateStack(currentYear);
