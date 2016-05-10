@@ -178,9 +178,9 @@
 			<div id="slider"></div>
 		</div>
 		<div id="buttonrow" class="buttonrow">		
-			<button id="both" class="button">Overview</button>
-			<button id="cities" class="button">Cities</button>			
-			<button id="choropleth" class="button">Countries</button>
+			<button id="both" class="button layer active">Overview</button>
+			<button id="cities" class="button layer">Cities</button>			
+			<button id="choropleth" class="button layer">Countries</button>
 		</div>		
 		<div id="map">
 			<div id="clock" class="clock">1950</div>
@@ -216,8 +216,14 @@
  			}
 
  			function toggleButton() {
+ 			// 	$(".buttonrow.button").click(function() {
+					
+				// })
 				$("button").click(function() {
-					$("button").removeClass("active");
+					if ( $(this).hasClass("layer") === true ) {
+						$(".layer").removeClass("active");
+					};
+
 					$(this).toggleClass("active");
 				});
 			}
@@ -262,7 +268,7 @@
 
 				stackX = d3.scale.linear()
 					.domain([1950, 2030])
-					.range([0, (stackW - stackMargin.left - stackMargin.right )])
+					.range([stackW * 0.05, (stackW - stackMargin.left - stackMargin.right )])
 					.clamp(true);
 
 				stackY = d3.scale.linear()
@@ -442,22 +448,24 @@
 					.attr("d", function(d) { return stackArea(d.values); })
       				.style("fill", function(d) { return stackColor(d.name); });		
 
-			    stackSvg.append("rect")
-			    	.attr("class", "cover")
-			    	.attr("x", -1)
-                    .attr("y", -5)
-                    .attr("width", (stackW - stackMargin.left - stackMargin.right)  )
-                    .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
-                    .style("fill", "white");
-
                 d3.selectAll(".continent")
       				.append("text")
 				    .datum(function(d) { return {name: d.name, value: d.values[0]}; })
 				    .attr("class", "continent_text")
-				    .attr("transform", function(d) { return "translate(" + (-50) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
+				    .attr("transform", function(d) { return "translate(" + (stackW * 0.05
+				    	) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
 				    .attr("x", -6)
 				    .attr("dy", ".35em")
+				    .attr("text-anchor", "end")
 				    .text(function(d) { return d.name; });
+
+				stackSvg.append("rect")
+			    	.attr("class", "cover")
+			    	.attr("x", stackW * 0.05 - 1)
+                    .attr("y", -5)
+                    .attr("width", (stackW * 0.95 - stackMargin.left - stackMargin.right)  )
+                    .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
+                    .style("fill", "white");
 
 				stackSvg.append("g")
 				    .attr("class", "x stackAxis")
@@ -546,7 +554,7 @@
 				setLayer();
 				$("#play").on("click", function() {
 					var buttonID = $(this).attr("id");
-					console.log(buttonID);
+					// console.log(buttonID);
 					if (playing === false) {
 						timer = setInterval(function() {
 							if (currentYear < 2030) {
@@ -592,7 +600,7 @@
 							if (typeof rateByCountry[d.id] !== "undefined") {  	
 				    			var currentAttribute = (currentYear - 1950);
 					    		return mapColor(rateByCountry[d.id][currentAttribute]);
-					    		console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
+					    		// console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
 					    	} else {
 					    		return "#f0f0f0";
 					    	};
@@ -626,7 +634,7 @@
 							if (typeof rateByCountry[d.id] !== "undefined") {  	
 				    			var currentAttribute = (currentYear - 1950);
 					    		return mapColor(rateByCountry[d.id][currentAttribute]);
-					    		console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
+					    		// console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
 					    	} else {
 					    		return "#f0f0f0";
 					    	};
@@ -641,7 +649,7 @@
 						if (typeof rateByCountry[d.id] !== "undefined") {  	
 			    			var currentAttribute = (currentYear - 1950);
 				    		return mapColor(rateByCountry[d.id][currentAttribute]);
-				    		console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
+				    		// console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
 				    	} else {
 				    		return "#f0f0f0";
 				    	}
@@ -661,11 +669,12 @@
 			}
 
 			function animateStack(currentYear) {
+				// console.log(currentYear);
 				d3.select(".cover").transition()
 					.duration(400)
 					.ease("sin")
 					.attr("x", function() {
-						return (stackW - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80;
+						return stackW * 0.05 + (stackW * 0.95 - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80;
 					});
 			}
 			
