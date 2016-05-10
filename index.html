@@ -33,7 +33,6 @@
 				/*border-radius: 10px;*/
 				font-size: 120%;
 				padding: 5px;
-				background-color: #FCBC7E;
 				font-weight: bold;
 			}
 
@@ -74,17 +73,13 @@
 				vertical-align: 0%;
 			}
 
-			.button .inactive {
-				background-color: #6baed6;
+			.button:hover, .button.active {
+				background-color: #F58229;
 			}
 
-			.button:hover {
-				background-color: #3182bd;
-			}
-
-			.button .active {
-				background-color: #08519c;
-			}
+		/*	.button.active {
+				background-color: #DC661E;
+			}*/
 
 			.clock {
 				font-size: 200%;
@@ -104,7 +99,7 @@
 
 			.countries {
 			  stroke: none;
-			  stroke-width: 0px;
+			  stroke-width: 1px;
 			  fill: "white";
 			}
 
@@ -160,6 +155,7 @@
 
 			.handle {
 				fill: #FCBC7E;
+				/*fill: #F58229;*/
 			}
 
 			.sliderAxis text {
@@ -178,13 +174,13 @@
 	<body>
 		
 		<div id="sliderrow" class="sliderrow">
-			<button id="play" class="playbutton button inactive">Play</button>	
+			<button id="play" class="button">Play</button>	
 			<div id="slider"></div>
 		</div>
 		<div id="buttonrow" class="buttonrow">		
-			<button id="both" class="bothbutton button inactive">Overview</button>
-			<button id="cities" class="citiesbutton button inactive">Cities</button>			
-			<button id="choropleth" class="choroplethbutton button inactive">Countries</button>
+			<button id="both" class="button">Overview</button>
+			<button id="cities" class="button">Cities</button>			
+			<button id="choropleth" class="button">Countries</button>
 		</div>		
 		<div id="map">
 			<div id="clock" class="clock">1950</div>
@@ -211,12 +207,20 @@
  				animateArt();
  			}
 
- 			function setArt() {			
+ 			function setArt() {
+ 				toggleButton();			
  				setMap();
  				setStack();
  				setSlider();
  				loadData();
  			}
+
+ 			function toggleButton() {
+				$("button").click(function() {
+					$("button").removeClass("active");
+					$(this).toggleClass("active");
+				});
+			}
 
  			function setMap() {
  				mapW = 960;
@@ -405,7 +409,7 @@
 				    		return mapColor(rateByCountry[d.id][currentAttribute]);
 				    		console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
 				    	} else {
-				    		return "#eff3ff";
+				    		return "#f0f0f0";
 				    	}
 					});
 			}
@@ -539,7 +543,8 @@
 
 			function animateArt() {
 				var timer;
-				$(".button").on("click", function() {
+				setLayer();
+				$("#play").on("click", function() {
 					var buttonID = $(this).attr("id");
 					console.log(buttonID);
 					if (playing === false) {
@@ -552,49 +557,83 @@
 								currentYear = 1950;
 							};
 
-							if (buttonID === "play") {
-								d3.selectAll(".cities")
-								.style("opacity", 0.7);
-								d3.selectAll(".countries")
-								.style("stroke-width", 0);
-
-								animateWorld(currentYear);
-								animateCity(currentYear);
-
-							} else if (buttonID === "choropleth") {
-								d3.selectAll(".cities")
-								.style("opacity", 0);
-								d3.selectAll(".countries")
-								.style("stroke-width", 0);
-								animateWorld(currentYear);
-
-							} else {
-								d3.selectAll(".cities")
-								.style("opacity", 0.7);
-								d3.selectAll(".countries")
-								.style("stroke", "black")
-								.style("stroke-width", 1)
-								.style("fill", "white");
-								animateCity(currentYear);
-							};
-
+							animateWorld(currentYear);
+							animateCity(currentYear);
 							animateStack(currentYear);
 							$("#clock").html(currentYear);
 							animateSlider(currentYear);
 						}, 1000);
 
 						$(this).html("Stop");
+						// $(this).
 						playing = true;
 					} else {
 						clearInterval(timer);
-						$(this).html(buttonID);
+						$(this).html("Play");
+						$(this).removeClass("active");
 						playing = false;
 					}
 				});
 
 			}
 
+			function setLayer() {
+				$("#choropleth").click(function() {
+					mapColor.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
 
+					d3.selectAll(".cities")
+						// .transition(50)
+						.style("opacity", 0);
+
+					d3.selectAll(".countries")
+						// .transition(50)
+						.style("stroke", "none")
+						.style("fill", function (d) {
+							if (typeof rateByCountry[d.id] !== "undefined") {  	
+				    			var currentAttribute = (currentYear - 1950);
+					    		return mapColor(rateByCountry[d.id][currentAttribute]);
+					    		console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
+					    	} else {
+					    		return "#f0f0f0";
+					    	};
+					    });					
+				});
+
+				$("#cities").click(function() {
+					mapColor.range([ "white"]);
+
+					d3.selectAll(".cities")
+						// .transition(50)
+						.style("opacity", 0.7);
+
+					d3.selectAll(".countries")
+						// .transition(50)
+						.style("fill", "white")
+						.style("stroke", "black");
+				});
+
+				$("#both").click(function() {
+					mapColor.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
+
+					d3.selectAll(".cities")
+						// .transition(50)
+						.style("opacity", 0.7);
+
+					d3.selectAll(".countries")
+						// .transition(50)
+						.style("stroke", "none")
+						.style("fill", function (d) {
+							if (typeof rateByCountry[d.id] !== "undefined") {  	
+				    			var currentAttribute = (currentYear - 1950);
+					    		return mapColor(rateByCountry[d.id][currentAttribute]);
+					    		console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
+					    	} else {
+					    		return "#f0f0f0";
+					    	};
+					    });		
+				});
+			}
+			
 			function animateWorld(currentYear) {
 				d3.selectAll(".countries").transition()
 					.duration(1000)
@@ -604,14 +643,14 @@
 				    		return mapColor(rateByCountry[d.id][currentAttribute]);
 				    		console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
 				    	} else {
-				    		return "#eff3ff";
+				    		return "#f0f0f0";
 				    	}
 					});
 			}
 
 			function animateCity(currentYear) {
 				d3.selectAll(".cities")
-			    .style("opacity", 0.7)
+			    // .style("opacity", 0.7)
 			    .transition()
 				.duration(1000)
 			    .attr("r", function(d) {
