@@ -5,11 +5,17 @@
 		<title>Urban Planet</title>
 		<style>
 			/* POSITION */
-			
+			#up_mainart {
+				position: relative;
+				margin: 0;
+				padding: 0;
+				font-family: Arial, sans-serif;
+			}
+
 			.buttonrow {
 				width: 100%;
 				position: relative;
-				margin: 0;
+				margin: 10px 0 0 0;
 				padding: 0;
 				padding-left: 70%;
 			}
@@ -21,19 +27,22 @@
 
 			#slider {
 				width: 90%;
-				height: 5vh;
+				height: 200%;
 				position: relative;
 				display: inline-block;
+				margin-top: 0;
 			}
 
 			#play {
-				vertical-align: 80%;
+				vertical-align: top;
 				width: 8%;
-				height: 70%;
+				height: 100%;
 				/*border-radius: 10px;*/
 				font-size: 120%;
 				padding: 5px;
 				font-weight: bold;
+				margin-top: 0;
+				position: relative;
 			}
 
 			#map {
@@ -71,6 +80,7 @@
 				pointer-events: auto;
 				cursor: pointer;
 				vertical-align: 0%;
+				position: relative;
 			}
 
 			.button:hover, .button.active {
@@ -81,16 +91,13 @@
 				background-color: #DC661E;
 			}*/
 
+			/*  COLORED MAP  */
+
 			.clock {
 				font-size: 200%;
 				font-weight: bold;
 				text-align: center;
 				display: inline-block;
-			}
-
-			/*  COLORED MAP  */
-
-			.clock {
 				position: absolute;
 				width: 100%;
 				text-align: center;
@@ -172,21 +179,22 @@
 	</head>
 
 	<body>
-		
-		<div id="sliderrow" class="sliderrow">
-			<button id="play" class="button">Play</button>	
-			<div id="slider"></div>
+		<div id="up_mainart">
+			<div id="sliderrow" class="sliderrow">
+				<button id="play" class="button">Play</button>	
+				<div id="slider"></div>
+			</div>
+			<div id="buttonrow" class="buttonrow">		
+				<button id="both" class="button layer active">Overview</button>
+				<button id="cities" class="button layer">Cities</button>			
+				<button id="choropleth" class="button layer">Countries</button>
+			</div>		
+			<div id="map">
+				<div id="clock" class="clock">1950</div>
+			</div>
+			<div id="stack"></div>		
 		</div>
-		<div id="buttonrow" class="buttonrow">		
-			<button id="both" class="button layer active">Overview</button>
-			<button id="cities" class="button layer">Cities</button>			
-			<button id="choropleth" class="button layer">Countries</button>
-		</div>		
-		<div id="map">
-			<div id="clock" class="clock">1950</div>
-		</div>
-		<div id="stack"></div>
-				
+						
 		<!-- Load JQuery and d3.js -->
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
@@ -310,7 +318,7 @@
  			function setSlider() {
  				sliderW = $("#slider").width();
  				sliderH = $("#slider").height();
- 				sliderMargin = {top: sliderH * 0.05, right: sliderW * 0.05, bottom: sliderH * 0.15, left: sliderW * 0.02};
+ 				sliderMargin = {top: sliderH * 0.2, right: sliderW * 0.05, bottom: sliderH, left: sliderW * 0.02};
 
  				sliderX = d3.scale.linear()
 					.domain([1950, 2030])
@@ -327,7 +335,8 @@
 
 			function loadData() {
 				queue()
-					.defer(d3.json, "../data/worldmap.json")
+					// .defer(d3.json, "../data/worldmap.json")
+					.defer(d3.json, "../data/worldmap2.json")
 					.defer(d3.csv, "../data/urbanization_rate.csv")
 					// .defer(d3.csv, "../data/cities_population.csv")
 					.defer(d3.csv, "../data/largest_200_cities.csv")
@@ -461,7 +470,7 @@
 
 				stackSvg.append("rect")
 			    	.attr("class", "cover")
-			    	.attr("x", stackW * 0.05 - 1)
+			    	.attr("x", (stackW * 0.95 - stackMargin.left - stackMargin.right))
                     .attr("y", -5)
                     .attr("width", (stackW * 0.95 - stackMargin.left - stackMargin.right)  )
                     .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
@@ -486,7 +495,7 @@
 
 				sliderSvg.append("g")
 					.attr("class", "x sliderAxis")
-					.attr("transform", "translate(0," + (sliderH - sliderMargin.top - sliderMargin.bottom) / 2 + ")")
+					// .attr("transform", "translate(0," + (sliderH - sliderMargin.top - sliderMargin.bottom) / 5 + ")")
 					.call( d3.svg.axis()
 					.ticks(16)
 					.scale(sliderX)
@@ -514,7 +523,7 @@
 				d3.select(".slider")
 					.append("circle")
 					.attr("class", "handle")	
-					.attr("transform", "translate(0," + (sliderH - sliderMargin.top - sliderMargin.bottom)/ 2 + ")")
+					// .attr("transform", "translate(0," + 0 + ")")
 					.attr("r", 10)
 					.call(brush.event);
 

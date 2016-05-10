@@ -107,7 +107,7 @@
 		(function($) {
  			/* GLOBALS */
 
- 			var mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackRW, stackRH, stackMargin, stackWidth, stackHeight, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
+ 			var mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackRW, stackRH, stackMargin, stackWidth, stackHeight, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 2014, playing = false;
 
  			init();
  			// $(document).ready( init );
@@ -203,7 +203,7 @@
 
 			function loadData() {
 				queue()
-					.defer(d3.json, "../data/worldmap.json")
+					.defer(d3.json, "../data/worldmap2.json")
 					.defer(d3.csv, "../data/urbanization_rate.csv")
 					.defer(d3.csv, "../data/cities_population.csv")
 					.defer(d3.csv, "../data/continent_percent.csv")
