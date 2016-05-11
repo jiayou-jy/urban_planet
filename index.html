@@ -31,19 +31,7 @@
 				position: relative;
 				display: inline-block;
 				margin-top: 0;
-			}
-
-			#play {
-				vertical-align: top;
-				width: 8%;
-				height: 100%;
-				/*border-radius: 10px;*/
-				font-size: 120%;
-				padding: 5px;
-				font-weight: bold;
-				margin-top: 0;
-				position: relative;
-			}
+			}		
 
 			#map {
 			  width: 100%;
@@ -64,7 +52,28 @@
 				font-size: 100%;
 			}
 
-			/* BUTTONROW */
+			.keys {
+				/*outline: 1px solid black;*/
+				position: absolute;
+				width: 20%;
+				height: 50%;
+				bottom: 0;
+				margin-left: 50px;
+			}
+
+			/* BUTTONS */
+
+			#play {
+				vertical-align: top;
+				width: 8%;
+				height: 100%;
+				/*border-radius: 10px;*/
+				font-size: 120%;
+				padding: 5px;
+				font-weight: bold;
+				margin-top: 0;
+				position: relative;
+			}
 
 			.button {
 				margin: 20px 0 0 0;
@@ -106,7 +115,7 @@
 
 			.countries {
 			  stroke: none;
-			  stroke-width: 1px;
+			  stroke-width: 0.5px;
 			  fill: "white";
 			}
 
@@ -169,6 +178,17 @@
 				pointer-events: none;
 			}
 
+			/* KEY */
+
+			.keys p {
+				font-weight: bold;
+				margin-left: 20px;
+				/*text-align: center;*/
+			}
+
+		/*	.continent_text {
+				font-weight: 
+			}*/
 			/*.slider .handle text {
 			  fill: white;
 			  text-align: center;
@@ -191,6 +211,9 @@
 			</div>		
 			<div id="map">
 				<div id="clock" class="clock">1950</div>
+				<div id="keys" class="keys">
+					<p> Key </p>
+				</div>
 			</div>
 			<div id="stack"></div>		
 		</div>
@@ -205,7 +228,7 @@
 		(function($) {
  			/* GLOBALS */
 
- 			var sliderW, sliderH, sliderMargin, mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackMargin, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
+ 			var sliderW, sliderH, sliderMargin, mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackMargin, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, keyW, keyH, keyMargin, keySvg, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
 
  			init();
  			// $(document).ready( init );
@@ -220,6 +243,7 @@
  				setMap();
  				setStack();
  				setSlider();
+ 				setKeys();
  				loadData();
  			}
 
@@ -333,15 +357,38 @@
 				    .attr("transform", "translate(" + sliderMargin.left + "," + sliderMargin.top + ")");	
  			}
 
+ 			function setKeys() {
+				keyW = $("#keys").width();
+ 				keyH = $("#keys").height();
+ 				keyMargin = {top: keyH * 0.05, right: keyW * 0.05, bottom: keyH * 0.15, left: keyW * 0.05};
+
+ 				keySvg = d3.select("#keys").append("svg")
+ 					.attr("width", keyW)
+				    .attr("height", keyH)
+				    .attr("id", "keysvg")
+				    .append("g")
+				    .attr("class", "g-key")
+				    .attr("transform", "translate(" + keyMargin.left + "," + keyMargin.top + ")");	
+			}
+
 			function loadData() {
 				queue()
 					// .defer(d3.json, "../data/worldmap.json")
-					.defer(d3.json, "../data/worldmap2.json")
-					.defer(d3.csv, "../data/urbanization_rate.csv")
+					.defer(d3.json, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/worldmap.json")
+					.defer(d3.csv, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/urbanization_rate.css")
 					// .defer(d3.csv, "../data/cities_population.csv")
-					.defer(d3.csv, "../data/largest_200_cities.csv")
-					.defer(d3.csv, "../data/continent_percent.csv")
+					.defer(d3.csv, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/largest_200_cities.csv")
+					.defer(d3.csv, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/continent_percent.csv")
 					.await(processData);
+
+				// queue()
+				// 	// .defer(d3.json, "../data/worldmap.json")
+				// 	.defer(d3.json, "../data/worldmap.json")
+				// 	.defer(d3.csv, "../data/urbanization_rate.csv")
+				// 	// .defer(d3.csv, "../data/cities_population.csv")
+				// 	.defer(d3.csv, "../data/largest_200_cities.csv")
+				// 	.defer(d3.csv, "../data/continent_percent.csv")
+				// 	.await(processData);
 			}
 
 			function processData(error, worldmapData, countryData, cityData, continentData) {
@@ -408,6 +455,7 @@
 				drawCity(cityData);
 				drawStack(stackData);
 				drawSlider();
+				drawKeys();
 			}
 
 			function drawWorld(worldmapData) {
@@ -426,7 +474,11 @@
 				    	} else {
 				    		return "#f0f0f0";
 				    	}
-					});
+					})
+					.append("text")
+					.text(function(d) {
+						return d.id;
+					})
 			}
 
 			function drawCity(cityData) {
@@ -470,7 +522,7 @@
 
 				stackSvg.append("rect")
 			    	.attr("class", "cover")
-			    	.attr("x", (stackW * 0.95 - stackMargin.left - stackMargin.right))
+			    	.attr("x", (stackW - stackMargin.left - stackMargin.right))
                     .attr("y", -5)
                     .attr("width", (stackW * 0.95 - stackMargin.left - stackMargin.right)  )
                     .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
@@ -556,6 +608,90 @@
 						$("#clock").html(currentYear);
 	 			}
 				
+			}
+
+			function drawKeys() {
+
+				var colorKeyData = [0, 20, 40, 60, 80, 100];
+				var sizeKeyData = [400000, 4000000, 40000000];
+				var format = d3.format("s");
+
+				d3.select(".g-key")
+					.selectAll(".g-colorkey") 
+				    .data(colorKeyData)
+				    .enter().append("g")
+				    .attr("class", "g-colorkey")
+				    .attr("transform", function(d) {
+				    	return "translate(" + d * 2 + ", 10)";
+				    });
+
+				d3.selectAll(".g-colorkey")
+					.append("rect")
+				    .attr("class", "color_key")
+				   	.attr("x", 0)
+				   	.attr("y", 0)
+				   	.attr("width", 40)
+				   	.attr("height", 20)
+				   	.style("fill", function(d) {
+				   		if (d !== 100) {
+				   			return mapColor(d);
+				   		} else {
+				   			return "white";
+				   		}		
+				   	});
+
+				d3.selectAll(".g-colorkey").append("text")
+				    .attr("x", -8)
+				    .attr("y", 35)
+				    .attr("text-anchor", "start")
+				    .text(function(d) {
+				    	if (d === 100) {
+				    		return d + "%";
+				    	} else {
+				    		return d;
+				    	}		    	
+				    });
+
+				d3.select(".g-key").append("text")
+					.attr("class", "key_text")
+					.attr("transform", "translate(0, 0)")
+					.text("Urbanization rate:")
+
+				d3.select(".g-key").append("text")
+					.attr("class", "key_text")
+					.attr("transform", "translate(0, 80)")
+					.text("City population size (in thousands):")
+
+				d3.select(".g-key")
+					// .attr("id", "g-key")
+					.selectAll("g-sizekey") 
+				    .data(sizeKeyData)
+				    .enter().append("g")
+				    .attr("class", "g-sizekey")
+				    .attr("transform", function(d) {
+				    	return "translate(" + citySize( Math.sqrt(d / 1000) ) * 8 + ", 120)";
+				    });
+
+				d3.selectAll(".g-sizekey")
+					.append("circle")
+				    .attr("class", "size_key")
+				   	.attr("cx", 0)
+				   	.attr("cy", 0)
+				   	.attr("r", function(d) {
+				   		return citySize( Math.sqrt(d / 1000) )
+				   	})
+				   	.style("fill", "#F58229");
+
+				d3.selectAll(".g-sizekey").append("text")
+				    // .attr("x", -8)
+				    .attr("y", 35)
+				    .attr("text-anchor", "middle")
+				    .text(function(d) {
+				    		return format(d);
+				    	});
+				
+			// .range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#737373", "#525252", "#969696"]);
+
 			}
 
 			function animateArt() {
@@ -658,7 +794,7 @@
 						if (typeof rateByCountry[d.id] !== "undefined") {  	
 			    			var currentAttribute = (currentYear - 1950);
 				    		return mapColor(rateByCountry[d.id][currentAttribute]);
-				    		// console.log(mapColor(rateByCountry[d.id][currentAttribute]));		
+				    		console.log(rateByCountry[d.id][currentAttribute]);		
 				    	} else {
 				    		return "#f0f0f0";
 				    	}
