@@ -4,6 +4,7 @@
 		<meta charset="utf-8" />
 		<title>Urban Planet</title>
 		<style>
+			/* POSITION */
 			#up_mainart {
 				position: relative;
 				margin: 0;
@@ -14,9 +15,9 @@
 			.buttonrow {
 				width: 100%;
 				position: relative;
-				margin: 5px 0 0 0;
+				margin: 10px 0 0 0;
 				padding: 0;
-				padding-left: 35%;
+				padding-left: 70%;
 			}
 
 			.sliderrow {
@@ -48,15 +49,16 @@
 
 			text {
 				font-family: Arial, sans-serif;
-				font-size: 90%;
+				font-size: 100%;
 			}
 
 			.keys {
 				/*outline: 1px solid black;*/
 				position: absolute;
-				width: 22%;
+				width: 20%;
 				height: 50%;
 				bottom: 0;
+				margin-left: 50px;
 			}
 
 			/* BUTTONS */
@@ -64,20 +66,21 @@
 			#play {
 				vertical-align: top;
 				width: 8%;
-				height: 40px;
+				height: 100%;
 				/*border-radius: 10px;*/
 				font-size: 120%;
+				padding: 5px;
 				font-weight: bold;
 				margin-top: 0;
 				position: relative;
 			}
 
 			.button {
-				margin: 0;
+				margin: 20px 0 0 0;
 				background-color: #FCBC7E;
 				border: 1px solid white;
-				padding: 3px 5px;
-				width: 100px;
+				/*padding: px 10px;*/
+				width: 8%;
 				text-align: center;
 				color: white;
 				font-size: 90%;
@@ -107,11 +110,11 @@
 				position: absolute;
 				width: 100%;
 				text-align: center;
-				bottom: 30px;
+				top: 10px;
 			}
 
 			.countries {
-			  stroke: black;
+			  stroke: none;
 			  stroke-width: 0.5px;
 			  fill: "white";
 			}
@@ -175,22 +178,22 @@
 				pointer-events: none;
 			}
 
-			.continent_text {
-				font-weight: bold;
-			}
-
 			/* KEY */
 
 			.keys p {
 				font-weight: bold;
 				margin-left: 20px;
-				margin: 0 0 10px 0;
 				/*text-align: center;*/
 			}
 
-			.key_label {
-				font-size: 80%;
-			}
+		/*	.continent_text {
+				font-weight: 
+			}*/
+			/*.slider .handle text {
+			  fill: white;
+			  text-align: center;
+			  font-size: 18px;
+			}*/
 
 		</style>
 	</head>
@@ -202,8 +205,8 @@
 				<div id="slider"></div>
 			</div>
 			<div id="buttonrow" class="buttonrow">		
-				<!-- <button id="both" class="button layer active">Overview</button> -->
-				<button id="cities" class="button layer active">Cities</button>			
+				<button id="both" class="button layer active">Overview</button>
+				<button id="cities" class="button layer">Cities</button>			
 				<button id="choropleth" class="button layer">Countries</button>
 			</div>		
 			<div id="map">
@@ -231,7 +234,6 @@
  			// $(document).ready( init );
 
  			function init() {
- 				$("#slider").html("");
  				setArt();
  				animateArt();
  			}
@@ -259,7 +261,7 @@
 			}
 
  			function setMap() {
- 				mapW = 850;
+ 				mapW = 960;
 				mapH = 460;
 				mapRW = $("#map").width();
 				mapRH = $("#map").height();
@@ -268,7 +270,7 @@
 				mapHeight = mapRW * mapH / mapW;
 
 				mapProjection = d3.geo.mercator()
-				    .center([30, 10])
+				    .center([15, 10])
 				    .scale(150);
 
 				mapPath = d3.geo.path()
@@ -276,12 +278,13 @@
 
 				mapColor = d3.scale.quantize()
 					.domain([0, 100])
-					// .range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
-					.range(["white"]);
+					.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
+					// .range(["white"])
 
 				citySize = d3.scale.linear()
 					.domain([20, 200])
 					.range([1, 20]);
+					
 
 				mapSvg = d3.select("#map").append("svg")
 				    .attr("preserveAspectRatio", "xMidYMid")
@@ -294,7 +297,7 @@
  			function setStack() {
  				stackW = $("#stack").width();
  				stackH = $("#stack").height();
- 				stackMargin = {top: stackH * 0.05, right: stackW * 0.1, bottom: stackH * 0.2, left: stackW * 0.1};
+ 				stackMargin = {top: stackH * 0.05, right: stackW * 0.05, bottom: stackH * 0.15, left: stackW * 0.05};
 
 				stackX = d3.scale.linear()
 					.domain([1950, 2030])
@@ -309,7 +312,7 @@
 				stackXAxis = d3.svg.axis()
 					.scale(stackX)
 					.orient("bottom")
-					.ticks(8)
+					.ticks(16)
 					.tickFormat(function(d) {return d; });	
 
 				stackYAxis = d3.svg.axis()
@@ -349,7 +352,7 @@
 
 				sliderSvg = d3.select("#slider").append("svg")
 				    .attr("width", sliderW)
-				    .attr("height", sliderH /2)
+				    .attr("height", sliderH)
 				    .attr("id", "slidersvg")
 				    .append("g")
 				    .attr("transform", "translate(" + sliderMargin.left + "," + sliderMargin.top + ")");	
@@ -358,7 +361,7 @@
  			function setKeys() {
 				keyW = $("#keys").width();
  				keyH = $("#keys").height();
- 				keyMargin = {top: keyH * 0.05, right: keyW * 0.05, bottom: keyH * 0.15, left: keyW * 0.1};
+ 				keyMargin = {top: keyH * 0.05, right: keyW * 0.05, bottom: keyH * 0.15, left: keyW * 0.05};
 
  				keySvg = d3.select("#keys").append("svg")
  					.attr("width", keyW)
@@ -609,9 +612,6 @@
 			}
 
 			function drawKeys() {
-				var keyColor = d3.scale.quantize()
-					.domain([0, 100])
-					.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#737373"]);
 
 				var colorKeyData = [0, 20, 40, 60, 80, 100];
 				var sizeKeyData = [400000, 4000000, 40000000];
@@ -623,27 +623,26 @@
 				    .enter().append("g")
 				    .attr("class", "g-colorkey")
 				    .attr("transform", function(d) {
-				    	return "translate(" + d * 1.2 + ", 10)";
+				    	return "translate(" + d * 2 + ", 10)";
 				    });
 
 				d3.selectAll(".g-colorkey")
 					.append("rect")
 				    .attr("class", "color_key")
-				   	.attr("x", -5)
+				   	.attr("x", 0)
 				   	.attr("y", 0)
-				   	.attr("width", 24)
+				   	.attr("width", 40)
 				   	.attr("height", 20)
 				   	.style("fill", function(d) {
 				   		if (d !== 100) {
-				   			return keyColor(d);
+				   			return mapColor(d);
 				   		} else {
 				   			return "white";
 				   		}		
 				   	});
 
 				d3.selectAll(".g-colorkey").append("text")
-					.attr("class", "key_label")
-				    .attr("x", -10)
+				    .attr("x", -8)
 				    .attr("y", 35)
 				    .attr("text-anchor", "start")
 				    .text(function(d) {
@@ -656,13 +655,13 @@
 
 				d3.select(".g-key").append("text")
 					.attr("class", "key_text")
-					.attr("transform", "translate(-15, 0)")
+					.attr("transform", "translate(0, 0)")
 					.text("Urbanization rate:")
 
 				d3.select(".g-key").append("text")
 					.attr("class", "key_text")
-					.attr("transform", "translate(-15, 70)")
-					.text("City population size:")
+					.attr("transform", "translate(0, 80)")
+					.text("City population size (in thousands):")
 
 				d3.select(".g-key")
 					// .attr("id", "g-key")
@@ -670,8 +669,8 @@
 				    .data(sizeKeyData)
 				    .enter().append("g")
 				    .attr("class", "g-sizekey")
-				    .attr("transform", function(d, i) {
-				    	return "translate(" + (citySize( Math.sqrt(d / 1000) ) + i * 35) + ", 100)";
+				    .attr("transform", function(d) {
+				    	return "translate(" + citySize( Math.sqrt(d / 1000) ) * 8 + ", 120)";
 				    });
 
 				d3.selectAll(".g-sizekey")
@@ -685,7 +684,6 @@
 				   	.style("fill", "#F58229");
 
 				d3.selectAll(".g-sizekey").append("text")
-					.attr("class", "key_label")
 				    // .attr("x", -8)
 				    .attr("y", 35)
 				    .attr("text-anchor", "middle")
@@ -718,7 +716,7 @@
 							animateStack(currentYear);
 							$("#clock").html(currentYear);
 							animateSlider(currentYear);
-						}, 800);
+						}, 1000);
 
 						$(this).html("Stop");
 						// $(this).
@@ -792,7 +790,7 @@
 			
 			function animateWorld(currentYear) {
 				d3.selectAll(".countries").transition()
-					.duration(200)
+					.duration(1000)
 					.style("fill", function (d) {
 						if (typeof rateByCountry[d.id] !== "undefined") {  	
 			    			var currentAttribute = (currentYear - 1950);
@@ -808,7 +806,7 @@
 				d3.selectAll(".cities")
 			    // .style("opacity", 0.7)
 			    .transition()
-				.duration(500)
+				.duration(1000)
 			    .attr("r", function(d) {
 			   		if (d.year === currentYear) {
 			    		return citySize( Math.sqrt(d.population) );
@@ -819,10 +817,10 @@
 			function animateStack(currentYear) {
 				// console.log(currentYear);
 				d3.select(".cover").transition()
-					.duration(200)
+					.duration(400)
 					.ease("sin")
 					.attr("x", function() {
-						return stackW * 0.05 + (stackW * 0.95 - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80 - 1;
+						return stackW * 0.05 + (stackW * 0.95 - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80;
 					});
 			}
 			
@@ -833,7 +831,6 @@
 			}
 
 		})(jQuery);
-
 
 		</script>
 	</body>
