@@ -22,10 +22,11 @@
 			.sliderrow {
 				width: 100%;
 				height: 5vh;
+				position: relative;
 			}
 
 			#slider {
-				width: 90%;
+				width: 85%;
 				height: 200%;
 				position: relative;
 				display: inline-block;
@@ -42,13 +43,13 @@
 
 			#stack {
 				width: 100%;
-				height: 20vh;
+				height: 25vh;
 				position: relative;
 			}
 
 			text {
 				/*font-family: Arial, sans-serif;*/
-				font-size: 80%;
+				font-size: 70%;
 			}
 
 			.key {
@@ -63,7 +64,7 @@
 
 			#play {
 				vertical-align: top;
-				width: 8%;
+				width: 12%;
 				height: 40px;
 				/*border-radius: 10px;*/
 				font-size: 120%;
@@ -175,9 +176,12 @@
 				pointer-events: none;
 			}
 
-			.continent_text {
-				font-weight: bold;
+			.stacklabel_text {
+				
+                font-size: 85%;
 			}
+
+
 
 			/* KEY */
 
@@ -188,15 +192,38 @@
 				/*text-align: center;*/
 			}
 
-			.key_label {
-				font-size: 75%;
+                       .key_text {
+				font-size: 90%;
+			}
+
+			@media screen and (max-width: 480px) {
+				#sliderrow {
+					height: 10vh;
+				}
+				#play {
+					width: 30%;
+				}
+
+				#slider {
+					width: 100%;
+				}
+
+				.buttonrow {
+					padding-left: 20%;
+				}
+
+				.key {
+					position: relative;
+					width: 100%;
+					height: 12vh;
+				}
 			}
 
 		</style>
 	</head>
 
 	<body>
-		<p>INTRO TEXT HERE</p>
+<p>Earth has become an urban planet. More than half of the world’s people now live in cities, and the proportion is growing. And urban areas are sprawling even faster than they are adding people, swallowing up both farm- and wildlands.&nbsp;</p>
 
 <div id="up_mainart">
 <div class="sliderrow" id="sliderrow"><button class="button active" id="play">Play</button>
@@ -208,23 +235,38 @@
 
 <div id="map">
 <div class="clock" id="clock">1950</div>
+</div>
+<div class="key" id="colorkey">
+<p>Key</p>
+</div>
 
-<div class="key" id="colorkey"><p>Key</p></div>
-<div class="key" id="sizekey"><p>Key</p></div>
-
+<div class="key" id="sizekey">
+<p>Key</p>
 </div>
 </div>
 
 <p>CAPTION FOR STACK MAP HERE (THIS IS BEFORE THE MAP)</p>
 
 <div id="stack">&nbsp;</div>
-</div>
 
 <p>NEW TEXT STARTS HERE</p>
+
+<p>CAPTION FOR BIODIVERSITY MAP HERE (THIS IS BEFORE THE MAP)</p>
+
+<p><iframe class="juxtapose" frameborder="0" height="449" src="https://cdn.knightlab.com/libs/juxtapose/latest/embed/index.html?uid=8e6c7b2c-185d-11e6-a524-0e7075bba956" width="100%"></iframe></p>
+
+<p>The implications are sobering. The land area needed to provide city residents with food, energy, and materials is expanding; this ecological footprint is often 200 times greater than the area of a city itself. The resulting carbon emissions, added to those from cities themselves, mean that urbanization is now the main driver of climate change.&nbsp;</p>
 
 <p>CAPTION FOR VANCOUVER HEAT MAP HERE (THIS IS BEFORE THE MAP)</p>
 
 <p><iframe class="juxtapose" frameborder="0" height="481" src="https://cdn.knightlab.com/libs/juxtapose/latest/embed/index.html?uid=b94848e6-1851-11e6-a524-0e7075bba956" width="100%"></iframe></p>
+
+<p>The rise of cities is not, however, all doom and gloom. By some metrics, consolidating human populations helps shrink our individual environmental footprints, and cities are serving as laboratories for further improvements. Researchers are exploring creative approaches to harvesting urban waste streams, integrating renewable sources of energy, and improving transit.</p>
+
+<p>This collection of Reviews, Perspectives, and News features delves deeper into how we came to live in cities and what urbanization means for the future of our planet and ourselves. One message is clear: the urban planet is here to stay, and the decisions we make today about how we build and live in cities will affect generations to come.</p>
+
+<p>— Nicholas S. Wigginton, Julia Fahrenkamp-Uppenbrink, Brad Wible, David Malakoff</p>
+
 
 						
 		<!-- Load JQuery and d3.js -->
@@ -349,7 +391,8 @@
 					.values(function(d) {return d.values; });
 
 				stackColor = d3.scale.ordinal()
-					.range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#737373", "#525252", "#969696"]);
+					.range(["#DC661E", "#F58229", "#FCBC7E", "#FFDAAB", "#529DBA", "#005E7F"])
+					// .range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#737373", "#525252", "#969696"]);
 
 				stackSvg = d3.select("#stack").append("svg")
 				    .attr("width", stackW)
@@ -362,7 +405,7 @@
  			function setSlider() {
  				sliderW = $("#slider").width();
  				sliderH = $("#slider").height();
- 				sliderMargin = {top: sliderH * 0.2, right: sliderW * 0.05, bottom: sliderH, left: sliderW * 0.02};
+ 				sliderMargin = {top: 20, right: sliderW * 0.05, bottom: sliderH, left: sliderW * 0.05};
 
  				sliderX = d3.scale.linear()
 					.domain([1950, 2030])
@@ -371,7 +414,7 @@
 
 				sliderSvg = d3.select("#slider").append("svg")
 				    .attr("width", sliderW)
-				    .attr("height", sliderH /2)
+				    .attr("height", sliderH)
 				    .attr("id", "slidersvg")
 				    .append("g")
 				    .attr("transform", "translate(" + sliderMargin.left + "," + sliderMargin.top + ")");	
@@ -537,16 +580,6 @@
 					.attr("d", function(d) { return stackArea(d.values); })
       				.style("fill", function(d) { return stackColor(d.name); });		
 
-        //         d3.selectAll(".continent")
-      		// 		.append("text")
-				    // .datum(function(d) { return {name: d.name, value: d.values[0]}; })
-				    // .attr("class", "continent_text")
-				    // .attr("transform", function(d) { return "translate(" + (stackW * 0.05
-				    // 	) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
-				    // .attr("x", -6)
-				    // .attr("dy", ".35em")
-				    // .attr("text-anchor", "end")
-				    // .text(function(d) { return d.name; });
 
 				stackSvg.append("rect")
 			    	.attr("class", "cover")
@@ -565,6 +598,30 @@
 				    .attr("class", "y stackAxis")
 				    .attr("transform", "translate(" + (stackW - stackMargin.left - stackMargin.right) + ", 0)")
 				    .call(stackYAxis);
+
+
+				stackSvg.selectAll(".stacklabel")
+					.data(continentNames)
+					.enter().append("g")
+					.attr("class", "stacklabel")
+					.attr("transform", function(d, i) {
+						return "translate(0" + "," + i * 20 + ")"
+					});
+
+				d3.selectAll(".stacklabel")
+					.append("circle")
+					.attr("class", "stacklabel_circle")
+					.attr("r", 8)
+					.style( "fill", function(d) {return stackColor(d)});
+
+
+				d3.selectAll(".stacklabel")
+					.append("text")
+					.attr("class", "stacklabel_text")
+					.attr("text-anchor", "start")
+					.attr("x", 10)
+					.attr("dy", "0.4em")
+					.text(function(d) {return d});
 			}
 
 			function drawSlider() {
@@ -577,7 +634,7 @@
 					.attr("class", "x sliderAxis")
 					// .attr("transform", "translate(0," + (sliderH - sliderMargin.top - sliderMargin.bottom) / 5 + ")")
 					.call( d3.svg.axis()
-					.ticks(16)
+					.ticks(8)
 					.scale(sliderX)
 					.orient("bottom")
 					.tickSize(10)
@@ -652,7 +709,7 @@
 				    .enter().append("g")
 				    .attr("class", "g-colorkey")
 				    .attr("transform", function(d) {
-				    	return "translate(" + d * 1.2 + ", 20)";
+				    	return "translate(" + d * 1.2 + ", 30)";
 				    });
 
 				d3.selectAll(".g-colorkey")
@@ -685,12 +742,12 @@
 
 				d3.select(".g-keyC").append("text")
 					.attr("class", "key_text")
-					.attr("transform", "translate(-15, 10)")
+					.attr("transform", "translate(-15, 20)")
 					.text("Urbanization rate:")
 
 				d3.select(".g-keyS").append("text")
 					.attr("class", "key_text")
-					.attr("transform", "translate(-15, 10)")
+					.attr("transform", "translate(-15, 20)")
 					.text("City population size:")
 
 				d3.select(".g-keyS")
@@ -700,7 +757,7 @@
 				    .enter().append("g")
 				    .attr("class", "g-sizekey")
 				    .attr("transform", function(d, i) {
-				    	return "translate(" + (citySize( Math.sqrt(d / 1000) ) + i * 35) + ", 40)";
+				    	return "translate(" + (citySize( Math.sqrt(d / 1000) ) + i * 35) + ", 50)";
 				    });
 
 				d3.selectAll(".g-sizekey")
