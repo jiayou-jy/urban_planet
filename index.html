@@ -8,7 +8,7 @@
 				position: relative;
 				margin: 0;
 				padding: 0;
-				font-family: Arial, sans-serif;
+				/*font-family: Arial, sans-serif;*/
 			}
 
 			.buttonrow {
@@ -34,7 +34,7 @@
 
 			#map {
 			  width: 100%;
-			  font-family: Arial, sans-serif;
+			  /*font-family: Arial, sans-serif;*/
 			  position: relative;
 			  /*height: 70vh;*/
 			  /*outline: 10px solid #F58229;*/
@@ -47,15 +47,15 @@
 			}
 
 			text {
-				font-family: Arial, sans-serif;
-				font-size: 90%;
+				/*font-family: Arial, sans-serif;*/
+				font-size: 80%;
 			}
 
-			.keys {
+			.key {
 				/*outline: 1px solid black;*/
 				position: absolute;
-				width: 22%;
-				height: 50%;
+				width: 25%;
+				height: 30%;
 				bottom: 0;
 			}
 
@@ -181,7 +181,7 @@
 
 			/* KEY */
 
-			.keys p {
+			.key p {
 				font-weight: bold;
 				margin-left: 20px;
 				margin: 0 0 10px 0;
@@ -189,31 +189,43 @@
 			}
 
 			.key_label {
-				font-size: 80%;
+				font-size: 75%;
 			}
 
 		</style>
 	</head>
 
 	<body>
-		<div id="up_mainart">
-			<div id="sliderrow" class="sliderrow">
-				<button id="play" class="button">Play</button>	
-				<div id="slider"></div>
-			</div>
-			<div id="buttonrow" class="buttonrow">		
-				<!-- <button id="both" class="button layer active">Overview</button> -->
-				<button id="cities" class="button layer active">Cities</button>			
-				<button id="choropleth" class="button layer">Countries</button>
-			</div>		
-			<div id="map">
-				<div id="clock" class="clock">1950</div>
-				<div id="keys" class="keys">
-					<p> Key </p>
-				</div>
-			</div>
-			<div id="stack"></div>		
-		</div>
+		<p>INTRO TEXT HERE</p>
+
+<div id="up_mainart">
+<div class="sliderrow" id="sliderrow"><button class="button active" id="play">Play</button>
+
+<div id="slider">&nbsp;</div>
+</div>
+
+<div class="buttonrow" id="buttonrow"><button class="button layer active" id="cities">Cities</button><button class="button layer" id="choropleth">Countries</button></div>
+
+<div id="map">
+<div class="clock" id="clock">1950</div>
+
+<div class="key" id="colorkey"><p>Key</p></div>
+<div class="key" id="sizekey"><p>Key</p></div>
+
+</div>
+</div>
+
+<p>CAPTION FOR STACK MAP HERE (THIS IS BEFORE THE MAP)</p>
+
+<div id="stack">&nbsp;</div>
+</div>
+
+<p>NEW TEXT STARTS HERE</p>
+
+<p>CAPTION FOR VANCOUVER HEAT MAP HERE (THIS IS BEFORE THE MAP)</p>
+
+<p><iframe class="juxtapose" frameborder="0" height="481" src="https://cdn.knightlab.com/libs/juxtapose/latest/embed/index.html?uid=b94848e6-1851-11e6-a524-0e7075bba956" width="100%"></iframe></p>
+
 						
 		<!-- Load JQuery and d3.js -->
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -225,7 +237,7 @@
 		(function($) {
  			/* GLOBALS */
 
- 			var sliderW, sliderH, sliderMargin, mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackMargin, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, keyW, keyH, keyMargin, keySvg, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = false;
+ 			var sliderW, sliderH, sliderMargin, mapW, mapH, mapRW, mapRH, mapMargin, mapWidth, mapHeight, stackW, stackH, stackMargin, mapSvg, stackSvg, mapProjection, mapPath, mapColor, citySize, stackX, stackY, stackXAxis, stackYAxis, stackArea, stackStack, stackColor, brush, handle, keyW, keyH, keyMargin, keySvg, rateByCountry = {}, yearNames, continentNames, stackData, currentYear = 1950, playing = true, format = d3.format("s");
 
  			init();
  			// $(document).ready( init );
@@ -242,6 +254,7 @@
  				setStack();
  				setSlider();
  				setKeys();
+ 				displayKeys();
  				loadData();
  			}
 
@@ -253,9 +266,11 @@
 					if ( $(this).hasClass("layer") === true ) {
 						$(".layer").removeClass("active");
 					};
-
+					
 					$(this).toggleClass("active");
+					displayKeys();
 				});
+				
 			}
 
  			function setMap() {
@@ -294,15 +309,15 @@
  			function setStack() {
  				stackW = $("#stack").width();
  				stackH = $("#stack").height();
- 				stackMargin = {top: stackH * 0.05, right: stackW * 0.1, bottom: stackH * 0.2, left: stackW * 0.1};
+ 				stackMargin = {top: stackH * 0.05, right: stackW * 0.1, bottom: stackH * 0.2, left: stackW * 0.05};
 
 				stackX = d3.scale.linear()
 					.domain([1950, 2030])
-					.range([stackW * 0.05, (stackW - stackMargin.left - stackMargin.right )])
+					.range([0, (stackW - stackMargin.left - stackMargin.right )])
 					.clamp(true);
 
 				stackY = d3.scale.linear()
-					.domain([0, 100])
+					.domain([0, 5100000000])
 					.range([(stackH - stackMargin.top - stackMargin.bottom), 0])
 					.clamp(true);
 
@@ -316,7 +331,14 @@
 					.scale(stackY)
 					.orient("right")
 					.ticks(5)
-					.tickFormat(function(d) {return d + "%"; });	
+					.tickFormat(function(d) {
+						if (d === 5000000000) {
+							return d / 1000000000 + " billion"
+						} else {
+							return d / 1000000000;
+						}
+					});	
+					// .tickFormat(function(d) {return d + "%"; });	
 
 				stackArea = d3.svg.area()
 					.x(function(d) { return stackX(d.year); })
@@ -356,17 +378,25 @@
  			}
 
  			function setKeys() {
-				keyW = $("#keys").width();
- 				keyH = $("#keys").height();
+				keyW = $("#colorkey").width();
+ 				keyH = $("colorkey").height();
  				keyMargin = {top: keyH * 0.05, right: keyW * 0.05, bottom: keyH * 0.15, left: keyW * 0.1};
 
- 				keySvg = d3.select("#keys").append("svg")
+ 				colorKeySvg = d3.select("#colorkey").append("svg")
  					.attr("width", keyW)
 				    .attr("height", keyH)
-				    .attr("id", "keysvg")
+				    .attr("id", "colorkeysvg")
 				    .append("g")
-				    .attr("class", "g-key")
-				    .attr("transform", "translate(" + keyMargin.left + "," + keyMargin.top + ")");	
+				    .attr("class", "g-keyC")
+				    .attr("transform", "translate(" + keyMargin.left + "," + keyMargin.top + ")");
+
+				sizeKeySvg = d3.select("#sizekey").append("svg")
+ 					.attr("width", keyW)
+				    .attr("height", keyH)
+				    .attr("id", "sizekeysvg")
+				    .append("g")
+				    .attr("class", "g-keyS")
+				    .attr("transform", "translate(" + keyMargin.left + "," + keyMargin.top + ")");		
 			}
 
 			function loadData() {
@@ -374,9 +404,9 @@
 					// .defer(d3.json, "../data/worldmap.json")
 					.defer(d3.json, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/worldmap.json")
 					.defer(d3.csv, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/urbanization_rate.csv")
-					// .defer(d3.csv, "../data/cities_population.csv")
 					.defer(d3.csv, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/largest_200_cities.csv")
-					.defer(d3.csv, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/continent_percent.csv")
+					.defer(d3.csv, "http://sciencestatic.aws.aaas.org.s3.amazonaws.com/article-resources/placeholder-urban/continent_absolute.csv")
+					// .defer(d3.csv, "../data/continent_absolute.csv")
 					.await(processData);
 
 				// queue()
@@ -419,12 +449,12 @@
 
 				continentData.forEach(function(d) {
 					d.year = parseInt(d.year);
-					d["Africa"] = parseFloat(d["Africa"]);
-					d["Asia"] = parseFloat(d["Asia"]);
-					d["Europe"] = parseFloat(d["Europe"]);
-					d["Latin America"] = parseFloat(d["Latin America"]);
-					d["North America"] = parseFloat(d["North America"]);
-					d["Oceania"] = parseFloat(d["Oceania"]);
+					d["Africa"] = parseInt(d["Africa"] * 1000);
+					d["Asia"] = parseInt(d["Asia"] * 1000);
+					d["Europe"] = parseInt(d["Europe"] * 1000);
+					d["Latin America"] = parseInt(d["Latin America"] * 1000);
+					d["North America"] = parseInt(d["North America"] * 1000);
+					d["Oceania"] = parseInt(d["Oceania"] * 1000);
 				})
 
 				continentNames = d3.keys(continentData[0])
@@ -507,22 +537,22 @@
 					.attr("d", function(d) { return stackArea(d.values); })
       				.style("fill", function(d) { return stackColor(d.name); });		
 
-                d3.selectAll(".continent")
-      				.append("text")
-				    .datum(function(d) { return {name: d.name, value: d.values[0]}; })
-				    .attr("class", "continent_text")
-				    .attr("transform", function(d) { return "translate(" + (stackW * 0.05
-				    	) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
-				    .attr("x", -6)
-				    .attr("dy", ".35em")
-				    .attr("text-anchor", "end")
-				    .text(function(d) { return d.name; });
+        //         d3.selectAll(".continent")
+      		// 		.append("text")
+				    // .datum(function(d) { return {name: d.name, value: d.values[0]}; })
+				    // .attr("class", "continent_text")
+				    // .attr("transform", function(d) { return "translate(" + (stackW * 0.05
+				    // 	) + "," + stackY(d.value.y0 + d.value.y / 2) + ")"; })
+				    // .attr("x", -6)
+				    // .attr("dy", ".35em")
+				    // .attr("text-anchor", "end")
+				    // .text(function(d) { return d.name; });
 
 				stackSvg.append("rect")
 			    	.attr("class", "cover")
 			    	.attr("x", (stackW - stackMargin.left - stackMargin.right))
                     .attr("y", -5)
-                    .attr("width", (stackW * 0.95 - stackMargin.left - stackMargin.right)  )
+                    .attr("width", (stackW - stackMargin.left - stackMargin.right)  )
                     .attr("height", (stackH - stackMargin.top - stackMargin.bottom + 4)  )
                     .style("fill", "white");
 
@@ -615,15 +645,14 @@
 
 				var colorKeyData = [0, 20, 40, 60, 80, 100];
 				var sizeKeyData = [400000, 4000000, 40000000];
-				var format = d3.format("s");
 
-				d3.select(".g-key")
+				d3.select(".g-keyC")
 					.selectAll(".g-colorkey") 
 				    .data(colorKeyData)
 				    .enter().append("g")
 				    .attr("class", "g-colorkey")
 				    .attr("transform", function(d) {
-				    	return "translate(" + d * 1.2 + ", 10)";
+				    	return "translate(" + d * 1.2 + ", 20)";
 				    });
 
 				d3.selectAll(".g-colorkey")
@@ -654,24 +683,24 @@
 				    	}		    	
 				    });
 
-				d3.select(".g-key").append("text")
+				d3.select(".g-keyC").append("text")
 					.attr("class", "key_text")
-					.attr("transform", "translate(-15, 0)")
+					.attr("transform", "translate(-15, 10)")
 					.text("Urbanization rate:")
 
-				d3.select(".g-key").append("text")
+				d3.select(".g-keyS").append("text")
 					.attr("class", "key_text")
-					.attr("transform", "translate(-15, 70)")
+					.attr("transform", "translate(-15, 10)")
 					.text("City population size:")
 
-				d3.select(".g-key")
+				d3.select(".g-keyS")
 					// .attr("id", "g-key")
 					.selectAll("g-sizekey") 
 				    .data(sizeKeyData)
 				    .enter().append("g")
 				    .attr("class", "g-sizekey")
 				    .attr("transform", function(d, i) {
-				    	return "translate(" + (citySize( Math.sqrt(d / 1000) ) + i * 35) + ", 100)";
+				    	return "translate(" + (citySize( Math.sqrt(d / 1000) ) + i * 35) + ", 40)";
 				    });
 
 				d3.selectAll(".g-sizekey")
@@ -692,18 +721,42 @@
 				    .text(function(d) {
 				    		return format(d);
 				    	});
-				
-			// .range([ "#f0f0f0", "#d9d9d9", "#bdbdbd", "#737373", "#525252", "#969696"]);
+			}
 
+			function displayKeys() {
+				if ($("#cities").hasClass("active") === true) {
+					$("#colorkey").css("display", "none");
+					$("#sizekey").css("display", "block");
+					console.log("city");
+				} else {
+					$("#colorkey").css("display", "block");
+					$("#sizekey").css("display", "none");
+					console.log("country");
+
+				}
 			}
 
 			function animateArt() {
 				var timer;
 				setLayer();
+
+				if ($("#play").hasClass("active") === true) {
+					playing = true;
+					$("#play").html("Stop");
+					play();
+				}
+
 				$("#play").on("click", function() {
-					var buttonID = $(this).attr("id");
-					// console.log(buttonID);
-					if (playing === false) {
+					if ($(this).hasClass("active") === true) {
+						playing = true;
+					} else {
+						playing = false;
+					}
+					play();
+				});
+
+				function play() {
+						if (playing === true) {
 						timer = setInterval(function() {
 							if (currentYear < 2030) {
 								// console.log(currentYear);
@@ -720,17 +773,13 @@
 							animateSlider(currentYear);
 						}, 800);
 
-						$(this).html("Stop");
-						// $(this).
-						playing = true;
-					} else {
-						clearInterval(timer);
-						$(this).html("Play");
-						$(this).removeClass("active");
-						playing = false;
-					}
-				});
+						$("#play").html("Stop");
+					} else if (playing === false) {
 
+						clearInterval(timer);
+						$("#play").html("Play");
+					};
+				}
 			}
 
 			function setLayer() {
@@ -822,7 +871,7 @@
 					.duration(200)
 					.ease("sin")
 					.attr("x", function() {
-						return stackW * 0.05 + (stackW * 0.95 - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80 - 1;
+						return (stackW - stackMargin.left - stackMargin.right ) * (currentYear - 1950) / 80 - 1;
 					});
 			}
 			
